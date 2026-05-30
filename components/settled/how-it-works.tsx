@@ -1,4 +1,8 @@
+"use client"
+
 import Image from "next/image"
+import { useRef } from "react"
+import { gsap, useGSAP } from "@/lib/gsap"
 import { Stagger } from "@/components/settled/stagger"
 
 const steps = [
@@ -35,8 +39,57 @@ const nextSteps = [
 ]
 
 export function HowItWorks() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const stepsRef = useRef<HTMLDivElement>(null)
+  const afterRef = useRef<HTMLDivElement>(null)
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia()
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        if (stepsRef.current) gsap.set(stepsRef.current.children, { autoAlpha: 1, y: 0 })
+        if (afterRef.current) gsap.set(afterRef.current, { autoAlpha: 1, y: 0 })
+      })
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        if (stepsRef.current?.children.length) {
+          gsap.from(stepsRef.current.children, {
+            autoAlpha: 0,
+            y: 24,
+            duration: 0.8,
+            stagger: 0.12,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: stepsRef.current,
+              start: "top 85%",
+              once: true,
+            },
+          })
+        }
+
+        if (afterRef.current) {
+          gsap.from(afterRef.current, {
+            autoAlpha: 0,
+            y: 20,
+            duration: 0.75,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: afterRef.current,
+              start: "top 90%",
+              once: true,
+            },
+          })
+        }
+      })
+
+      return () => mm.revert()
+    },
+    { scope: sectionRef },
+  )
+
   return (
-    <section id="how-it-works" className="mx-auto max-w-[1200px] px-4 py-24 scroll-mt-20">
+    <section id="how-it-works" ref={sectionRef} className="mx-auto max-w-[1200px] px-4 py-24 scroll-mt-20">
       <Stagger className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7BA4FF]">The Process</p>
@@ -49,7 +102,7 @@ export function HowItWorks() {
         </p>
       </Stagger>
 
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
+      <div ref={stepsRef} className="mt-12 grid gap-4 md:grid-cols-2">
         {steps.map((step) => (
           <article key={step.number} className="overflow-hidden rounded-xl border border-white/10 bg-[#080808]">
             <div className="relative h-52 border-b border-white/10">
@@ -65,7 +118,10 @@ export function HowItWorks() {
         ))}
       </div>
 
-      <div className="mt-5 grid gap-4 rounded-xl border border-[#2563EB]/25 bg-[#07101f] p-5 md:grid-cols-[0.9fr_1.1fr] md:p-7">
+      <div
+        ref={afterRef}
+        className="mt-5 grid gap-4 rounded-xl border border-[#2563EB]/25 bg-[#07101f] p-5 md:grid-cols-[0.9fr_1.1fr] md:p-7"
+      >
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7BA4FF]">After the scan</p>
           <h3 className="mt-3 text-2xl font-semibold leading-tight text-white">The software gives you direction, not false promises.</h3>

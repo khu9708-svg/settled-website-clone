@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { postEngineScan, validateEngineUpload } from "@/lib/engine-client"
+import { gsap, useGSAP } from "@/lib/gsap"
 import { useForensicOperator } from "@/lib/use-forensic-operator"
 
 const modules = [
@@ -10,26 +11,26 @@ const modules = [
     code: "01",
     label: "STUDENT LOAN AUDIT",
     href: "/student-loans",
-    detail: "MOHELA / Navient / Aidvantage / COVID forbearance / PSLF / IDR",
+    detail: "MOHELA / Navient / Aidvantage / PSLF / IDR / forbearance misreporting",
     active: true,
   },
   {
     code: "02",
-    label: "CREDIT FILE AUDIT",
+    label: "FORENSIC CREDIT AUDIT",
     href: "/disputes",
-    detail: "Collections / balances / dates / validation / bureau errors",
+    detail: "FCRA dispute / collections / charge-offs / validation failures",
   },
   {
     code: "03",
-    label: "BUSINESS FILE AUDIT",
+    label: "TAX LIENS & BUSINESS",
     href: "/business",
-    detail: "D&B / PAYDEX / vendor tradelines / business bureau records",
+    detail: "Tax liens / D&B / PAYDEX / vendor tradeline errors",
   },
   {
     code: "04",
-    label: "CERTIFIED MAIL",
+    label: "AUXILIARY BUREAUS",
     href: "/pricing",
-    detail: "Delivery evidence / response dates / escalation record",
+    detail: "ChexSystems / LexisNexis / EWS / certified-mail evidence chain",
   },
 ]
 
@@ -52,6 +53,46 @@ export function Hero() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useGSAP(
+    () => {
+      const section = sectionRef.current
+      if (!section) return
+
+      const modules = section.querySelectorAll("[data-hero-module]")
+      const content = section.querySelectorAll("[data-hero-content]")
+
+      const mm = gsap.matchMedia()
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set([modules, content], { autoAlpha: 1, x: 0, y: 0 })
+      })
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
+
+        tl.from(modules, {
+          autoAlpha: 0,
+          x: -14,
+          duration: 0.7,
+          stagger: 0.07,
+        }).from(
+          content,
+          {
+            autoAlpha: 0,
+            y: 22,
+            duration: 0.85,
+            stagger: 0.09,
+          },
+          "-=0.35",
+        )
+      })
+
+      return () => mm.revert()
+    },
+    { scope: sectionRef },
+  )
 
   const hasPastedText = text.trim().length > 0
   const canScan = useMemo(() => fileName.length > 0 || hasPastedText, [fileName, hasPastedText])
@@ -113,7 +154,7 @@ export function Hero() {
   }
 
   return (
-    <section id="solutions" className="relative overflow-hidden border-b border-white/[0.08] bg-black">
+    <section ref={sectionRef} id="solutions" className="relative overflow-hidden border-b border-white/[0.08] bg-black">
       <video
         className="absolute inset-0 h-full w-full object-cover opacity-[0.05]"
         src="/videos/hero.mp4"
@@ -131,6 +172,7 @@ export function Hero() {
           {modules.map((module) => (
             <a
               key={module.code}
+              data-hero-module
               href={module.href}
               className={`group grid grid-cols-[44px_1fr] gap-4 border px-4 py-4 transition ${
                 module.active
@@ -148,24 +190,31 @@ export function Hero() {
         </aside>
 
         <div className="order-1 lg:order-2">
-          <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
+          <div data-hero-content className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#7BA4FF]">Forensic Dispute Command</p>
             <p className="hidden text-[11px] font-bold uppercase tracking-[0.18em] text-white/35 sm:block">System Online</p>
           </div>
 
-          <h1 className="max-w-3xl text-pretty text-[clamp(3rem,6vw,6rem)] font-semibold uppercase leading-[0.87] text-white">
+          <h1
+            data-hero-content
+            className="max-w-3xl text-pretty text-[clamp(3rem,6vw,6rem)] font-semibold uppercase leading-[0.87] text-white"
+          >
             Forensic credit audit and student loan dispute intelligence, built for real reporting errors.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg font-semibold leading-[1.55] text-white/68">
-            Upload a PDF or paste account details. SETTLED runs a deterministic FCRA dispute and forensic debt audit
-            pass, cites the issue, and generates a document-specific letter. Dispute errors, not factual debts.
+          <p data-hero-content className="mt-6 max-w-2xl text-lg font-semibold leading-[1.55] text-white/68">
+            Upload a PDF or paste account details. SETTLED&apos;s unified forensic engine runs a deterministic
+            student loan audit and FCRA dispute pass — cites the discrepancy, maps the statute, and compiles a
+            document-specific letter. Dispute reporting errors, not factual debts.
           </p>
 
-          <div className="mt-8 border border-white/12 bg-[#030303]/90 shadow-[0_34px_120px_rgba(0,0,0,0.7)]">
+          <div
+            data-hero-content
+            className="mt-8 border border-white/12 bg-[#030303]/90 shadow-[0_34px_120px_rgba(0,0,0,0.7)]"
+          >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">Input Terminal</p>
               <div className="text-right">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BA4FF]">Student Loan Engine</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BA4FF]">Unified Forensic Engine</p>
                 <p className="settled-tech text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
                   Operator: {forensicOperator}
                 </p>
