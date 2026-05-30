@@ -7,6 +7,8 @@
     "build": "next build",
     "vercel-build": "pnpm run build",
     "test:engines": "node --experimental-strip-types scripts/engine-regression.mjs",
+    "test:security": "node --experimental-strip-types --test \"tests/**/*.test.ts\"",
+    "test": "pnpm run test:security",
     "typecheck": "tsc --noEmit",
     "start": "next start",
     "lint": "eslint ."
@@ -82,6 +84,9 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.30.0",
+    "@eslint/js": "^9.30.0",
+    "typescript-eslint": "^8.35.0",
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
     "typescript": "5.7.3"

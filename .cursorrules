@@ -1,6 +1,40 @@
-a) All logic must be deterministic and data-driven.
-b) All user flows (Login, Sign-up, Get Started, Dashboard) must be 100% functional and handle state transitions instantaneously.
-c) PDF ingestion is strict PDF-only validation via /api/ingest; non-compliant documents are rejected immediately with 422.
-d) Backend routes must be hardened against all preventable 500-level errors through validation, bounded failures, and graceful fallbacks.
-e) PII scrubbing is mandatory on all exported Forensic Trace files.
-f) Settled Apex Standard UI baseline: Matte Obsidian aesthetic (#000000 and #2563EB) with zero-motion interaction defaults.
+PERMANENT ENGINEERING MANDATE: APEX INFRASTRUCTURE LOCK
+
+1) Architecture (Absolute Authority)
+- All production audit/business/statutory logic must execute in `forensic_core` (FastAPI).
+- Next.js is presentation/proxy only: auth session handling, UI interaction, and response rendering.
+- No sovereign/forensic rule execution is allowed in frontend runtime modules.
+
+2) Authentication (Server-Side Gate)
+- Every forensic route must validate server-side bearer token/session signature.
+- Unauthorized requests must fail at network boundary with 401 before audit execution.
+- No client-trusted plan gating for protected audit execution.
+
+3) Determinism (Byte-Stable Contract)
+- Same input payload must produce deterministic output schema and stable verdict fields.
+- Any non-deterministic output drift is a failed build.
+- Required strict schema keys for forensic records:
+  - STATUTE_RULE_ID
+  - INPUT_FACT_PATTERN
+  - STATUTORY_REFERENCE
+  - ANOMALY_VERDICT
+
+4) Storage/Data Plane
+- Statutory libraries/indices are backend data-plane assets (not frontend source-of-truth).
+- Execution layer consumes mapped archive entries and never uses ad-hoc template generation.
+- PII scrubbing is mandatory in exported traces and logs.
+
+5) Engineering Rigor
+- Use RORO and guard-clause style for service functions.
+- Optimize for async non-blocking execution and latency targets.
+- Build fails on preventable 500s or missing validation boundaries.
+
+6) Frontend Constraints
+- Frontend must remain deterministic display layer with Matte Obsidian identity.
+- No fake UI/forensic theater; no hidden business logic branches in UI helpers.
+
+Constitution of the Build:
+Before any code change, all agents MUST read and comply with:
+- `.rules/brand-identity.md`
+- `.rules/forensic-engine.md`
+- `.rules/deployment-integrity.md`
