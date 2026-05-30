@@ -1,0 +1,12 @@
+packages:
+  - .
+
+allowBuilds:
+  '@prisma/engines': set this to true or false
+  prisma: set this to true or false
+  sharp: set this to true or false
+
+overrides:
+  "@hono/node-server": "^1.19.13"
+  lodash: "^4.17.24"
+  postcss: "^8.5.10"

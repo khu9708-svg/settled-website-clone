@@ -1,0 +1,13 @@
+⨯ Error: ENOENT: no such file or directory, open 'C:\ROOT\node_modules\.pnpm\pdfkit@0.18.0\node_modules\pdfkit\js\data\Helvetica.afm'
+    at Object.Helvetica (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:75:2641)
+    at new lJ (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:75:4112)
+    at l1.open (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:96:97)
+    at hR.font (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:145:7151)
+    at hR.initFonts (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:145:6784)
+    at new hR (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:113:1215)
+    at hG (C:\Users\kevin\Documents\Codex\2026-05-29\if-i-paste-my-website-url\settled-website-clone\.next\server\chunks\[root-of-the-server]__0~uf4e8._.js:113:5444) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\ROOT\\node_modules\\.pnpm\\pdfkit@0.18.0\\node_modules\\pdfkit\\js\\data\\Helvetica.afm'
+}

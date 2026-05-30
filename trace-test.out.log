@@ -1,0 +1,8 @@
+▲ Next.js 16.2.6
+- Local:         http://localhost:3015
+- Network:       http://10.0.0.215:3015
+✓ Ready in 245ms
+[TitanLog] {"event":"forensic_ingest","analysisId":"ufo-c16cc271","documentType":"consumer-credit","status":"processed","latencyMs":7,"findings":3,"timestamp":"2026-05-30T06:02:08.053Z"}
+[TitanLog] {"event":"forensic_ingest","analysisId":"ufo-dc8b2ad4","documentType":"student-loan","status":"processed","latencyMs":2,"findings":1,"timestamp":"2026-05-30T06:02:08.071Z"}
+[TitanLog] {"event":"forensic_ingest","analysisId":"ufo-d4dad62e","documentType":"business-credit","status":"processed","latencyMs":1,"findings":3,"timestamp":"2026-05-30T06:02:08.079Z"}
+[TitanLog] {"event":"forensic_ingest","analysisId":"ufo-7923bf1d","documentType":"unknown","status":"unprocessable","latencyMs":0,"findings":0,"timestamp":"2026-05-30T06:02:08.086Z"}

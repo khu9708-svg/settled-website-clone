@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String?
+  subscription          String    @default("free") // free, tactical, active, enterprise
+  stripeCustomerId      String?   @unique
+  stripePriceId         String?
+  stripeSubscriptionId  String?   @unique
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  disputes              Dispute[]
+  payments              Payment[]
+}
+
+model Dispute {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String   @default("disputes") // student-loans, disputes, business
+  title             String   @default("Dispute case")
+  summary           String?  @db.Text
+  confidence        Int?
+  status            String   @default("scanned")
+  sourceText        String?  @db.Text
+  responseNotes     String?  @db.Text
+  dueDate           DateTime?
+  documentName      String
+  documentText      String   @db.Text
+  analysisResult    String   @db.Text // JSON string of analysis
+  violationsCount   Int      @default(0)
+  escalationLevel   String   @default("none") // round_1, round_2, legal_demand, none
+  letterGenerated   String?  @db.Text // Full dispute letter text
+  pdfUrl            String?
+  deliveryMethod    String?  // download, email, certified_mail
+  trackingNumber    String?
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSessionId   String?  @unique
+  stripeEventId     String?  @unique
+  amount            Int
+  currency          String   @default("usd")
+  status            String   @default("pending") // pending, succeeded, failed
+  plan              String   // tactical, active, enterprise
+  invoiceId         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model StripeEvent {
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  type          String
+  data          String   @db.Text
+  processed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}

@@ -1,0 +1,6 @@
+a) All logic must be deterministic and data-driven.
+b) All user flows (Login, Sign-up, Get Started, Dashboard) must be 100% functional and handle state transitions instantaneously.
+c) PDF ingestion is strict PDF-only validation via /api/ingest; non-compliant documents are rejected immediately with 422.
+d) Backend routes must be hardened against all preventable 500-level errors through validation, bounded failures, and graceful fallbacks.
+e) PII scrubbing is mandatory on all exported Forensic Trace files.
+f) Settled Apex Standard UI baseline: Matte Obsidian aesthetic (#000000 and #2563EB) with zero-motion interaction defaults.
