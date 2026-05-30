@@ -4,6 +4,8 @@ import { DashboardSection } from "@/components/settled/dashboard-section"
 import { DashboardActions } from "@/components/settled/dashboard-actions"
 import { auth } from "@/app/api/auth/auth"
 import { redirect } from "next/navigation"
+import { getSubscriptionSnapshot } from "@/lib/db"
+import { mapPlanToDashboardTier } from "@/lib/subscription-plans"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -11,6 +13,8 @@ export default async function DashboardPage() {
   if (!session?.user?.email) {
     redirect("/login?callbackUrl=/dashboard")
   }
+
+  const subscription = await getSubscriptionSnapshot(session.user.email)
 
   return (
     <main className="min-h-screen bg-black">
@@ -35,7 +39,7 @@ export default async function DashboardPage() {
         <DashboardSection
           user={{
             email: session.user.email,
-            plan: "tactical",
+            plan: mapPlanToDashboardTier(subscription.planId),
             disputesUsed: 0,
             lettersGenerated: 0,
           }}

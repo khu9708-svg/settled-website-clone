@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Menu, X } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { SettledLogo } from "./logo"
+import { useForensicOperator } from "@/lib/use-forensic-operator"
 
 const solutionItems = [
   { label: "Student Loans", href: "/student-loans", flagship: true },
@@ -19,6 +20,7 @@ const navItems = [
 ]
 
 export function Header() {
+  const forensicOperator = useForensicOperator()
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -66,6 +68,9 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <p className="settled-tech text-[10px] font-bold uppercase tracking-[0.16em] text-[#7BA4FF]">
+            Operator: {forensicOperator}
+          </p>
           <Button asChild variant="outline" className="h-12 rounded-lg border-white/12 bg-transparent px-7 text-sm font-medium text-white hover:bg-white/[0.06]">
             <a href="/login">Log In</a>
           </Button>

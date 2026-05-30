@@ -19,16 +19,17 @@ test.describe('SETTLED launch readiness smoke', () => {
   });
 
   test('pricing select opens the checkout destination', async ({ page }) => {
-    await page.route('**/api/checkout', async (route) => {
+    await page.route('**/api/payments', async (route) => {
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify({ url: `${baseURL}/dashboard?checkout=mocked` }),
+        body: JSON.stringify({ error: 'AUTH_REQUIRED' }),
+        status: 401,
       });
     });
 
     await page.goto(`${baseURL}/pricing`);
     await page.getByRole('button', { name: 'Select' }).first().click();
-    await expect(page).toHaveURL(/\/login\?callbackUrl=\/dashboard/);
+    await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fpricing/);
     await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible();
   });
 

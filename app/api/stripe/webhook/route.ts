@@ -1,226 +1,212 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { PUBLIC_CONFIG } from '@/lib/public-config';
-import { SERVER_CONFIG } from '@/lib/server-config';
+import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { PUBLIC_CONFIG } from '@/lib/public-config'
+import { SERVER_CONFIG } from '@/lib/server-config'
+import {
+  findSubscriptionEmailByStripeIdentifiers,
+  getLatestMetricEvent,
+  getSubscriptionSnapshot,
+  markStripeEventProcessed,
+  recordMetricEvent,
+  upsertSubscriptionSnapshot,
+  upsertUser,
+} from '@/lib/db'
+import { isPaidPlan, normalizeCheckoutSourceDomain } from '@/lib/subscription-plans'
 
 function getStripeClient() {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = process.env.STRIPE_SECRET_KEY?.trim()
   if (!key) {
-    throw new Error('STRIPE_SECRET_KEY not configured');
+    throw new Error('STRIPE_SECRET_KEY_MISSING')
   }
   return new Stripe(key, {
     apiVersion: '2026-05-27.dahlia',
-  });
+  })
 }
 
-interface CheckoutSessionCompletedEvent {
-  type: 'checkout.session.completed';
-  data: {
-    object: {
-      id: string;
-      customer_email: string;
-      metadata: {
-        plan: string;
-        userId: string;
-      };
-    };
-  };
+function extractEmailFromCheckoutSession(session: Stripe.Checkout.Session) {
+  const customerEmail = session.customer_email?.trim()
+  const metadataEmail = session.metadata?.user_email?.trim()
+  const customerDetailsEmail = session.customer_details?.email?.trim()
+  return customerEmail || metadataEmail || customerDetailsEmail || ''
 }
 
-interface InvoicePaymentSucceededEvent {
-  type: 'invoice.payment_succeeded';
-  data: {
-    object: {
-      customer_email: string;
-      subscription: string;
-    };
-  };
-}
-
-interface SubscriptionDeletedEvent {
-  type: 'customer.subscription.deleted';
-  data: {
-    object: {
-      customer_email: string;
-    };
-  };
-}
-
-type StripeEvent = CheckoutSessionCompletedEvent | InvoicePaymentSucceededEvent | SubscriptionDeletedEvent;
-
-// In-memory store for user subscriptions (replace with database)
-const userSubscriptions: Record<
-  string,
-  {
-    email: string;
-    plan: string;
-    status: string;
-    stripeCustomerId?: string;
-    subscriptionId?: string;
+async function sendPlanEmail(email: string, planLabel: string) {
+  if (!email || !process.env.RESEND_API_KEY) return
+  try {
+    const { Resend } = await import('resend')
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    await resend.emails.send({
+      from: SERVER_CONFIG.emailFrom,
+      to: email,
+      replyTo: SERVER_CONFIG.emailReplyTo,
+      subject: `SETTLED ${planLabel} plan is active`,
+      html: `
+        <h2>Your SETTLED plan is active</h2>
+        <p>Plan: <strong>${planLabel}</strong></p>
+        <p>Your account entitlements were updated immediately after payment confirmation.</p>
+        <p><a href="${PUBLIC_CONFIG.siteUrl}/dashboard" style="background:#2563EB;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Open Dashboard</a></p>
+      `,
+    })
+  } catch (error) {
+    console.error('WEBHOOK_EMAIL_FAILURE', error)
   }
-> = {};
-
-function getUserByEmail(email: string) {
-  return Object.entries(userSubscriptions).find((entry) => entry[1].email === email);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
-    const signature = request.headers.get('stripe-signature');
-
+    const signature = request.headers.get('stripe-signature')
     if (!signature) {
-      return NextResponse.json({ error: 'No signature provided' }, { status: 400 });
+      return NextResponse.json({ error: 'MISSING_SIGNATURE' }, { status: 400 })
     }
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim()
     if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET not configured');
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 422 });
+      return NextResponse.json({ error: 'WEBHOOK_SECRET_MISSING' }, { status: 422 })
     }
 
-    let event: Stripe.Event;
-
+    const body = await request.text()
+    let event: Stripe.Event
     try {
-      const stripe = getStripeClient();
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error('Webhook signature verification failed:', errorMessage);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      event = getStripeClient().webhooks.constructEvent(body, signature, webhookSecret)
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: 'INVALID_SIGNATURE',
+          details: error instanceof Error ? error.message : String(error),
+        },
+        { status: 400 }
+      )
     }
 
-    // Handle checkout.session.completed
+    const shouldProcess = await markStripeEventProcessed(event.id, event.type, event.data?.object)
+    if (!shouldProcess) {
+      return NextResponse.json({ received: true, deduplicated: true }, { status: 200 })
+    }
+
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const email = session.customer_email || '';
-      const plan = (session.metadata?.plan as string) || 'active_pipeline';
+      const session = event.data.object as Stripe.Checkout.Session
+      const email = extractEmailFromCheckoutSession(session)
+      const rawPlan = String(session.metadata?.plan_id || session.metadata?.plan || '').trim()
+      const sourceDomain = normalizeCheckoutSourceDomain(session.metadata?.checkout_source_domain)
+      const mode = session.mode === 'subscription' ? 'recurring' : 'one_time'
 
-      console.log(`Checkout completed for ${email} - Plan: ${plan}`);
+      if (!email || !isPaidPlan(rawPlan)) {
+        return NextResponse.json(
+          {
+            received: true,
+            skipped: true,
+            reason: 'CHECKOUT_MISSING_EMAIL_OR_PLAN',
+          },
+          { status: 200 }
+        )
+      }
 
-      // Update user subscription
-      const timestamp = Date.now().toString();
-      userSubscriptions[timestamp] = {
+      await upsertUser(email)
+      await upsertSubscriptionSnapshot({
         email,
-        plan,
-        status: 'active',
-        stripeCustomerId: session.customer as string,
-        subscriptionId: session.subscription as string,
-      };
+        planId: rawPlan,
+        planStatus: 'active',
+        subscriptionState: mode,
+        stripeCustomerId: typeof session.customer === 'string' ? session.customer : null,
+        stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : null,
+        checkoutSourceDomain: sourceDomain,
+        activatedAt: new Date().toISOString(),
+      })
 
-      // Send welcome email
-      try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+      const latestAudit = await getLatestMetricEvent('forensic.audit_completed', email)
+      const pipelineVelocityMs = latestAudit
+        ? Math.max(0, Date.now() - new Date(latestAudit.createdAt).getTime())
+        : 0
 
-        const planNames: Record<string, string> = {
-          surgical_strike: 'Surgical Strike',
-          active_pipeline: 'Active Pipeline',
-          business_engine: 'Business Engine',
-        };
+      await recordMetricEvent({
+        id: `subscription_activated:${event.id}`,
+        eventName: 'subscription.activated',
+        userEmail: email,
+        domain: sourceDomain,
+        planId: rawPlan,
+        analysisId: latestAudit?.analysisId || null,
+        metadata: {
+          stripeEventId: event.id,
+          stripeSessionId: session.id,
+          pipelineVelocityMs,
+          checkoutMode: mode,
+        },
+      })
 
-        const planFeatures: Record<string, string[]> = {
-          surgical_strike: ['1 document scan', '3 dispute letters', 'PDF download', 'Email delivery', 'Certified mail available'],
-          active_pipeline: [
-            'Unlimited document scans',
-            'Unlimited dispute letters',
-            'All delivery options',
-            'Priority support',
-          ],
-          business_engine: [
-            'Everything in Active Pipeline',
-            'Business credit engine',
-            'Unlimited client management',
-            'API access',
-            'Dedicated support',
-          ],
-        };
-
-        const planName = planNames[plan] || plan;
-        const features = planFeatures[plan] || [];
-
-        await resend.emails.send({
-          from: SERVER_CONFIG.emailFrom,
-          to: email,
-          replyTo: SERVER_CONFIG.emailReplyTo,
-          subject: `Welcome to SETTLED — Your ${planName} Account Is Active`,
-          html: `
-            <h2>Welcome to SETTLED</h2>
-            <p>Your <strong>${planName}</strong> plan is now active. Here's what you have access to:</p>
-            <ul>
-              ${features.map((f) => `<li>${f}</li>`).join('')}
-            </ul>
-            <p><a href="${PUBLIC_CONFIG.siteUrl}/dashboard" style="background: #2563EB; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Go to Your Dashboard</a></p>
-            <p>Questions? Contact us at ${SERVER_CONFIG.emailReplyTo}</p>
-          `,
-        });
-      } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
-      }
+      await sendPlanEmail(email, rawPlan.replace(/_/g, ' ').toUpperCase())
     }
 
-    // Handle invoice.payment_succeeded (recurring subscriptions)
     if (event.type === 'invoice.payment_succeeded') {
-      const invoice = event.data.object as Stripe.Invoice;
-      const email = invoice.customer_email || '';
-
-      console.log(`Payment succeeded for ${email}`);
-
-      const user = getUserByEmail(email);
-      if (user) {
-        user[1].status = 'active';
+      const invoice = event.data.object as Stripe.Invoice
+      const email = invoice.customer_email?.trim() || ''
+      const invoiceSubscriptionId =
+        ((invoice as unknown as { subscription?: string | null }).subscription as string | null) || null
+      if (email) {
+        const snapshot = await getSubscriptionSnapshot(email)
+        await upsertSubscriptionSnapshot({
+          email,
+          planId: snapshot.planId,
+          planStatus: 'active',
+          subscriptionState: snapshot.subscriptionState,
+          stripeCustomerId: typeof invoice.customer === 'string' ? invoice.customer : null,
+          stripeSubscriptionId: invoiceSubscriptionId,
+          checkoutSourceDomain: snapshot.checkoutSourceDomain,
+          activatedAt: snapshot.activatedAt || new Date().toISOString(),
+        })
+        await recordMetricEvent({
+          id: `invoice_payment_succeeded:${event.id}`,
+          eventName: 'subscription.renewed',
+          userEmail: email,
+          domain: snapshot.checkoutSourceDomain,
+          planId: snapshot.planId,
+          metadata: {
+            stripeEventId: event.id,
+            invoiceId: invoice.id,
+          },
+        })
       }
     }
 
-    // Handle customer.subscription.deleted
     if (event.type === 'customer.subscription.deleted') {
-      const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
+      const subscription = event.data.object as Stripe.Subscription
+      const email = await findSubscriptionEmailByStripeIdentifiers({
+        stripeCustomerId: typeof subscription.customer === 'string' ? subscription.customer : null,
+        stripeSubscriptionId: subscription.id,
+      })
 
-      console.log(`Subscription deleted for customer ${customerId}`);
-
-      // Find and downgrade user
-      Object.values(userSubscriptions).forEach((user) => {
-        if (user.stripeCustomerId === customerId) {
-          user.status = 'cancelled';
-          user.plan = 'cancelled';
-        }
-      });
-
-      // Send cancellation email
-      try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
-        const user = Object.entries(userSubscriptions).find(
-          (entry) => entry[1].stripeCustomerId === customerId
-        )?.[1];
-        if (user?.email) {
-          await resend.emails.send({
-            from: SERVER_CONFIG.emailFrom,
-            to: user.email,
-            replyTo: SERVER_CONFIG.emailReplyTo,
-            subject: 'Your SETTLED Subscription Has Been Cancelled',
-            html: `
-              <h2>Subscription Cancelled</h2>
-              <p>Your SETTLED subscription has been cancelled. You now have access to our free tier with limited scans.</p>
-              <p>If you'd like to reactivate your plan or have questions, please reply to this email or contact ${SERVER_CONFIG.emailReplyTo}</p>
-            `,
-          });
-        }
-      } catch (emailError) {
-        console.error('Failed to send cancellation email:', emailError);
+      if (email) {
+        const snapshot = await getSubscriptionSnapshot(email)
+        await upsertSubscriptionSnapshot({
+          email,
+          planId: snapshot.planId,
+          planStatus: 'cancelled',
+          subscriptionState: snapshot.subscriptionState,
+          stripeCustomerId: typeof subscription.customer === 'string' ? subscription.customer : null,
+          stripeSubscriptionId: subscription.id,
+          checkoutSourceDomain: snapshot.checkoutSourceDomain,
+          activatedAt: snapshot.activatedAt,
+        })
+        await recordMetricEvent({
+          id: `subscription_cancelled:${event.id}`,
+          eventName: 'subscription.cancelled',
+          userEmail: email,
+          domain: snapshot.checkoutSourceDomain,
+          planId: snapshot.planId,
+          metadata: {
+            stripeEventId: event.id,
+          },
+        })
       }
     }
 
-    return NextResponse.json({ received: true }, { status: 200 });
+    return NextResponse.json({ received: true }, { status: 200 })
   } catch (error) {
-    console.error('Webhook processing error:', error);
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
+      {
+        error: 'WEBHOOK_PROCESSING_FAILED',
+        message: error instanceof Error ? error.message : String(error),
+      },
       { status: 422 }
-    );
+    )
   }
 }
-
-export { userSubscriptions };

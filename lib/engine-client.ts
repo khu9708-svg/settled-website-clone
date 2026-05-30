@@ -1,14 +1,21 @@
 const MAX_PDF_BYTES = 20 * 1024 * 1024
+const SUPPORTED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
 export function validateEngineUpload(file: File) {
-  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+  const lowerName = file.name.toLowerCase()
+  const isSupportedMime =
+    file.type === 'application/pdf' ||
+    file.type === 'application/msword' ||
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  const hasSupportedExtension = SUPPORTED_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
+  const isSupportedFile = isSupportedMime || hasSupportedExtension
 
-  if (!isPdf) {
-    return 'Please upload a PDF file.'
+  if (!isSupportedFile) {
+    return 'Please upload a PDF or Word document (.pdf, .doc, .docx).'
   }
 
   if (file.size > MAX_PDF_BYTES) {
-    return 'This PDF is too large for direct upload. Paste the full report text into the box below instead. Pasted text is not limited by the PDF upload guard.'
+    return 'This file is too large for direct upload. Paste the full report text into the box below instead.'
   }
 
   return ''
@@ -17,9 +24,11 @@ export function validateEngineUpload(file: File) {
 export async function postEngineScan(endpoint: string, formData: FormData) {
   const file = formData.get('document')
   const hasFile = file instanceof File && file.size > 0
+  const text = String(formData.get('text') || '').trim()
+  const hasText = text.length > 0
 
-  if (!hasFile) {
-    throw new Error('Upload a PDF to continue. /api/ingest is strict PDF-only.')
+  if (!hasFile && !hasText) {
+    throw new Error('Provide a document upload or paste account text to continue.')
   }
 
   const response = await fetch(endpoint, {

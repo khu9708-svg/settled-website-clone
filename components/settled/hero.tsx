@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { postEngineScan, validateEngineUpload } from "@/lib/engine-client"
+import { useForensicOperator } from "@/lib/use-forensic-operator"
 
 const modules = [
   {
@@ -38,18 +39,22 @@ type AnalysisResult = {
   response?: string
   summary?: string
   error?: string
+  message?: string
+  warnings?: string[]
 }
 
 export function Hero() {
+  const forensicOperator = useForensicOperator()
   const [text, setText] = useState("")
   const [fileName, setFileName] = useState("")
   const [loading, setLoading] = useState(false)
-  const [logs, setLogs] = useState<string[]>([">_ AWAITING DOCUMENT UPLOAD"])
+  const [logs, setLogs] = useState<string[]>([">_ AWAITING DOCUMENT OR TEXT INPUT"])
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const canScan = useMemo(() => fileName.length > 0, [fileName])
+  const hasPastedText = text.trim().length > 0
+  const canScan = useMemo(() => fileName.length > 0 || hasPastedText, [fileName, hasPastedText])
 
   async function handleFile(file?: File) {
     if (!file) return
@@ -66,8 +71,8 @@ export function Hero() {
 
   async function runScan() {
     if (!canScan || loading) return
-    if (!fileInputRef.current?.files?.[0]) {
-      setError("Upload a PDF to continue. /api/ingest is strict PDF-only.")
+    if (!fileInputRef.current?.files?.[0] && !hasPastedText) {
+      setError("Provide a supported file upload (.pdf, .doc, .docx) or paste account text to continue.")
       return
     }
     setLoading(true)
@@ -84,13 +89,17 @@ export function Hero() {
       const formData = new FormData()
       if (fileInputRef.current?.files?.[0]) formData.append("document", fileInputRef.current.files[0])
       if (text.trim()) formData.append("text", text.trim())
+      formData.append("domain_hint", "student-loan")
       const data = (await postEngineScan("/api/ingest", formData)) as AnalysisResult
 
       setResult(data)
+      const warningLines =
+        data.warnings?.map((warning) => `>_ RECOVERY_WARNING: ${warning.toUpperCase()}`) || []
       setLogs((current) => [
         ...current,
         `>_ COMPILED: ${data.violations?.length || 0}_POSSIBLE_ISSUES`,
         `>_ CONFIDENCE: ${data.confidence || "REVIEW"}%`,
+        ...warningLines,
         ">_ OUTPUT_READY: DISPUTE_LETTER",
       ])
     } catch (err) {
@@ -104,7 +113,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative overflow-hidden border-b border-white/[0.08] bg-black">
+    <section id="solutions" className="relative overflow-hidden border-b border-white/[0.08] bg-black">
       <video
         className="absolute inset-0 h-full w-full object-cover opacity-[0.05]"
         src="/videos/hero.mp4"
@@ -145,17 +154,22 @@ export function Hero() {
           </div>
 
           <h1 className="max-w-3xl text-pretty text-[clamp(3rem,6vw,6rem)] font-semibold uppercase leading-[0.87] text-white">
-            Scan student loan reporting errors before they keep costing you.
+            Forensic credit audit and student loan dispute intelligence, built for real reporting errors.
           </h1>
           <p className="mt-6 max-w-2xl text-lg font-semibold leading-[1.55] text-white/68">
-            Upload a PDF or paste account details. SETTLED checks for possible reporting problems, cites the issue, and
-            generates a document-specific dispute letter. Factual debts are not disputed.
+            Upload a PDF or paste account details. SETTLED runs a deterministic FCRA dispute and forensic debt audit
+            pass, cites the issue, and generates a document-specific letter. Dispute errors, not factual debts.
           </p>
 
           <div className="mt-8 border border-white/12 bg-[#030303]/90 shadow-[0_34px_120px_rgba(0,0,0,0.7)]">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">Input Terminal</p>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BA4FF]">Student Loan Engine</p>
+              <div className="text-right">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BA4FF]">Student Loan Engine</p>
+                <p className="settled-tech text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
+                  Operator: {forensicOperator}
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-0 lg:grid-cols-[1fr_0.92fr]">
@@ -166,17 +180,17 @@ export function Hero() {
                     setText(event.target.value)
                     setError("")
                     if (event.target.value.trim().length > 8) {
-                      setLogs([">_ SUPPLEMENTAL_TEXT_RECEIVED", ">_ READY FOR PDF-AUGMENTED AUDIT"])
+                      setLogs([">_ TEXT_STREAM_RECEIVED", ">_ READY FOR DIRECT FORENSIC TRIAGE"])
                     }
                   }}
-                  placeholder="Optional: paste supplemental context (account dates, balance notes, or reporting details) to include with the uploaded PDF..."
+                  placeholder="Paste account/report text directly (no file required), or add context to combine with an uploaded file..."
                   className="min-h-[178px] w-full resize-none bg-transparent text-base font-semibold leading-relaxed text-white outline-none placeholder:text-white/32"
                 />
                 <div className="mt-4 flex flex-wrap gap-3">
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.doc,.docx"
                     className="hidden"
                     onChange={(event) => handleFile(event.target.files?.[0])}
                   />
@@ -186,7 +200,7 @@ export function Hero() {
                     onClick={() => fileInputRef.current?.click()}
                     className="h-11 rounded-none border-white/14 bg-transparent px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-white/[0.06]"
                   >
-                    Upload PDF
+                    Upload File
                   </Button>
                   <Button
                     type="button"
@@ -199,8 +213,18 @@ export function Hero() {
                 </div>
                 {fileName ? <p className="mt-3 text-xs font-bold uppercase tracking-[0.1em] text-[#7BA4FF]">{fileName}</p> : null}
                 {error ? <p className="mt-3 border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200">{error}</p> : null}
+                {result?.warnings?.length ? (
+                  <div className="mt-3 border border-amber-400/25 bg-amber-400/10 px-3 py-2">
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-amber-100">Recovery Warnings</p>
+                    <ul className="mt-2 space-y-1 text-sm font-semibold text-amber-100/90">
+                      {result.warnings.map((warning) => (
+                        <li key={warning}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <p className="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-white/42">
-                  /api/ingest accepts PDF uploads only.
+                  /api/ingest accepts text, PDF, and Word uploads.
                 </p>
               </div>
 
@@ -213,6 +237,9 @@ export function Hero() {
                 {result ? (
                   <div className="border-t border-white/10 pt-4">
                     <p className="text-sm font-bold uppercase tracking-[0.14em] text-white">Audit Output</p>
+                    <p className="settled-tech mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7BA4FF]">
+                      Forensic Profile: {forensicOperator}
+                    </p>
                     <p className="mt-2 text-sm font-semibold leading-relaxed text-white/62">
                       {result.summary || result.violations?.[0]?.item || "Document-specific result compiled."}
                     </p>

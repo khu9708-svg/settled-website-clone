@@ -14,6 +14,19 @@ export type PdfQualityAssessment = {
   rules: PdfQualityRuleResult[]
 }
 
+export type PdfReadabilityAssessment = {
+  assumeValid: true
+  confidence: number
+  warnings: string[]
+  signals: {
+    hasHeader: boolean
+    hasEof: boolean
+    controlRatio: number
+    structuralSignalCount: number
+    bytes: number
+  }
+}
+
 function tokenCoverageWeight(tokens: string[]) {
   if (!tokens.length) return 0
   return 3 / tokens.length
@@ -75,5 +88,58 @@ export function assessPdfQuality(
     threshold,
     passed: score >= threshold,
     rules,
+  }
+}
+
+export function assessPdfReadability(buffer: Buffer): PdfReadabilityAssessment {
+  const asBinary = buffer.toString('binary')
+  const asText = buffer.toString('utf8')
+  const warnings: string[] = []
+  const hasHeader = asBinary.startsWith('%PDF-')
+  const hasEof = asBinary.includes('%%EOF')
+  const bytes = buffer.length
+  const controlCharMatches = asText.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []
+  const controlRatio = asText.length > 0 ? controlCharMatches.length / asText.length : 1
+
+  const structuralTokens = ['/Type /Page', '/Font', 'stream', 'endstream', 'xref']
+  const structuralSignalCount = structuralTokens.reduce(
+    (count, token) => count + (asBinary.includes(token) ? 1 : 0),
+    0
+  )
+
+  if (!hasHeader) {
+    warnings.push('PDF header signature is missing or offset; recovery parsing enabled.')
+  }
+  if (!hasEof) {
+    warnings.push('EOF marker is missing; document may be truncated or malformed.')
+  }
+  if (bytes < 1024) {
+    warnings.push('PDF byte-size is unusually small; extracted evidence may be limited.')
+  }
+  if (controlRatio > 0.01) {
+    warnings.push('Binary noise ratio is elevated; OCR/parser fallback may be required.')
+  }
+  if (structuralSignalCount < 2) {
+    warnings.push('PDF structural signals are sparse; confidence is degraded.')
+  }
+
+  const confidencePenalty =
+    (hasHeader ? 0 : 18) +
+    (hasEof ? 0 : 14) +
+    (bytes < 1024 ? 12 : 0) +
+    (controlRatio > 0.01 ? 14 : 0) +
+    (structuralSignalCount < 2 ? 12 : 0)
+
+  return {
+    assumeValid: true,
+    confidence: Math.max(0, 100 - confidencePenalty),
+    warnings,
+    signals: {
+      hasHeader,
+      hasEof,
+      controlRatio,
+      structuralSignalCount,
+      bytes,
+    },
   }
 }

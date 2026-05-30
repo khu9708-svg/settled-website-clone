@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/auth'
-import { isDatabaseConfigured, logRuleOutcomes, pool, upsertUser } from '@/lib/db'
+import { isDatabaseConfigured, logRuleOutcomes, pool, recordMetricEvent, upsertUser } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -22,6 +22,19 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const { id } = await context.params
     const body = await request.json()
     await upsertUser(email, session.user?.name)
+
+    const existingResult = await pool.query(
+      `SELECT type, status, response_notes, tracking_number FROM settled_cases WHERE id = $1 AND user_email = $2 LIMIT 1;`,
+      [id, email]
+    )
+    const existing = existingResult.rows[0] as
+      | {
+          type: string
+          status: string
+          response_notes: string | null
+          tracking_number: string | null
+        }
+      | undefined
 
     await pool.query(
       `
@@ -56,6 +69,44 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         caseId: id,
         violations: result.rows[0]?.violations || [],
         outcome: body.outcome,
+      })
+    }
+
+    const domainFromType =
+      existing?.type === 'business'
+        ? 'business-credit'
+        : existing?.type === 'student-loans'
+          ? 'student-loan'
+          : 'consumer-credit'
+
+    if (
+      (body.status && body.status !== existing?.status) ||
+      (typeof body.responseNotes === 'string' && body.responseNotes !== (existing?.response_notes || '')) ||
+      (typeof body.trackingNumber === 'string' && body.trackingNumber !== (existing?.tracking_number || ''))
+    ) {
+      await recordMetricEvent({
+        id: `case_next_step:${id}:${Date.now()}`,
+        eventName: 'case.next_step_recorded',
+        userEmail: email,
+        domain: domainFromType,
+        metadata: {
+          caseId: id,
+          status: body.status || existing?.status || null,
+          trackingNumberProvided: Boolean(body.trackingNumber),
+          responseNotesLength: typeof body.responseNotes === 'string' ? body.responseNotes.length : 0,
+        },
+      })
+    }
+
+    if (body.status === 'escalation_ready' && body.status !== existing?.status) {
+      await recordMetricEvent({
+        id: `case_escalation:${id}:${Date.now()}`,
+        eventName: 'case.escalation_ready',
+        userEmail: email,
+        domain: domainFromType,
+        metadata: {
+          caseId: id,
+        },
       })
     }
 

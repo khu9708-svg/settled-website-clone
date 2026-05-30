@@ -6,14 +6,30 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(PUBLIC_CONFIG.siteUrl),
-  title: 'SETTLED | Student Loan Dispute Letters & Credit Report Error Scanner',
+  title: 'SETTLED | Forensic Credit Audit, FCRA Dispute Engine, Student Loan Audit Platform',
   description:
-    'SETTLED scans student loan and credit report documents for possible reporting errors, then generates dispute letters and tracked next steps. Built for MOHELA, Navient, Aidvantage, collections, FCRA disputes, and certified mail workflows.',
+    'SETTLED is a forensic debt audit platform for forensic credit audit, FCRA dispute workflows, student loan audit, tax lien review, ChexSystems, LexisNexis, and Early Warning Services disputes with certified mail tracking.',
   generator: 'v0.app',
   applicationName: 'SETTLED',
   authors: [{ name: 'SETTLED' }],
   keywords: [
     'student loan dispute letter',
+    'forensic credit audit',
+    'forensic debt audit',
+    'credit dispute software',
+    'credit report audit',
+    'student loan audit',
+    'FCRA dispute',
+    'fcra dispute letter',
+    'Forensic Credit Audit',
+    'Tax Liens',
+    'ChexSystems',
+    'LexisNexis',
+    'Early Warning Services',
+    'Tax lien dispute',
+    'ChexSystems dispute',
+    'LexisNexis dispute',
+    'Early Warning Services dispute',
     'student loan credit report error',
     'MOHELA late payment dispute',
     'COVID forbearance late payment',
@@ -33,9 +49,9 @@ export const metadata: Metadata = {
     'business credit disputes',
   ],
   openGraph: {
-    title: 'SETTLED | Student Loan Dispute Letters & Credit Report Error Scanner',
+    title: 'SETTLED | Forensic Credit Audit & FCRA Dispute Engine',
     description:
-      'Student loan dispute software for possible credit reporting errors, document-specific dispute letters, and tracked next steps.',
+      'Forensic credit audit and student loan dispute platform with deterministic engine logic, document-specific dispute letters, and tracked next steps.',
     type: 'website',
     siteName: 'SETTLED',
     images: [
@@ -49,9 +65,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SETTLED | Student Loan Dispute Letters & Credit Report Error Scanner',
+    title: 'SETTLED | Forensic Credit Audit & FCRA Dispute Engine',
     description:
-      'Scan student loan and credit report documents for possible reporting errors and generate document-specific dispute letters.',
+      'Run forensic debt audits for credit reports and student loan records, then generate document-specific FCRA dispute letters.',
     images: ['/images/settled-human-hero.png'],
   },
   icons: {

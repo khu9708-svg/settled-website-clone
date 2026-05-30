@@ -76,8 +76,7 @@ export type ForensicTrace = {
   integrity_note: string;
 };
 
-const UNKNOWN_RESPONSE =
-  'SETTLED could not classify this document with enough confidence to run a forensic audit. Paste or upload a full credit report, student loan tradeline, servicer record, business credit report, collection notice, bureau response, or lender/vendor record with account names, dates, balances, statuses, and reporting source details.';
+const CLEAN_STATUS_RESPONSE = 'Status: Clean. No reportable anomalies identified.';
 
 const UNPROCESSABLE_RESPONSE =
   'SETTLED stopped the audit because the document could not be read or classified with enough confidence. Upload a cleaner PDF or paste the full text from the report. The system will not generate a dispute from corrupted, incomplete, or unrecognizable input.';
@@ -250,7 +249,7 @@ function executeRule(documentText: string, facts: ExtractedFacts, rule: Rule): F
 }
 
 function composeLetter(audit: Omit<ForensicAudit, 'response' | 'forensic_trace'>) {
-  if (!audit.violations.length) return UNKNOWN_RESPONSE;
+  if (!audit.violations.length) return CLEAN_STATUS_RESPONSE;
 
   const variant = parseInt(audit.analysis_id.slice(-2), 16) % 4;
   const facts = audit.extracted_facts;
@@ -372,7 +371,7 @@ export function runUnifiedForensicAudit(documentText: string): ForensicAudit {
     violations,
     confidence,
     escalation_level: critical >= 2 ? 'legal_demand' : critical || high >= 2 ? 'round_2' : violations.length ? 'round_1' : 'none',
-    summary: violations[0]?.description || 'No document-supported violation isolated from the provided material',
+    summary: violations[0]?.description || CLEAN_STATUS_RESPONSE,
     processing_status: 'processed',
     document_type: triage.document_type,
     legacy_case_type: legacyCaseType(triage.document_type),

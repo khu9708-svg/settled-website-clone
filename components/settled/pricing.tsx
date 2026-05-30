@@ -31,17 +31,39 @@ export function Pricing() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [error, setError] = useState("")
 
+  function inferSourceDomain() {
+    const fromQuery = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("domain") : ""
+    const normalizedQuery = String(fromQuery || "").trim().toLowerCase()
+    if (normalizedQuery === "student-loan" || normalizedQuery === "consumer-credit" || normalizedQuery === "business-credit") {
+      return normalizedQuery
+    }
+
+    if (typeof document !== "undefined") {
+      const referrer = document.referrer || ""
+      if (referrer.includes("/student-loans")) return "student-loan"
+      if (referrer.includes("/disputes")) return "consumer-credit"
+      if (referrer.includes("/business")) return "business-credit"
+    }
+
+    return "unknown"
+  }
+
   async function startCheckout(plan: string) {
     setLoadingPlan(plan)
     setError("")
 
     try {
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, sourceDomain: inferSourceDomain() }),
       })
       const data = await response.json()
+
+      if (response.status === 401) {
+        window.location.href = `/login?callbackUrl=${encodeURIComponent("/pricing")}`
+        return
+      }
 
       if (!response.ok || !data.url) {
         throw new Error(data.error || "Checkout failed")
@@ -87,10 +109,10 @@ export function Pricing() {
               </div>
               <p className="mt-6 flex-1 text-sm font-semibold leading-relaxed text-white/58">{plan.use}</p>
               <Button
-                className={`mt-5 h-11 rounded-none text-sm font-bold uppercase tracking-[0.08em] ${
+                className={`mt-5 h-11 rounded-none border border-transparent text-sm font-bold uppercase tracking-[0.08em] transition-all duration-200 ${
                   plan.id === "surgical_strike"
-                    ? "bg-white text-black hover:bg-white/90"
-                    : "bg-[#2563EB] text-white hover:bg-[#2563EB]/90"
+                    ? "bg-white text-black hover:bg-white/90 hover:shadow-[0_0_24px_rgba(255,255,255,0.28)]"
+                    : "bg-[#2563EB] text-white shadow-[0_0_24px_rgba(37,99,235,0.34)] hover:border-[#7BA4FF] hover:bg-[#2563EB]/90 hover:shadow-[0_0_34px_rgba(37,99,235,0.5)]"
                 }`}
                 disabled={loadingPlan === plan.id}
                 onClick={() => startCheckout(plan.id)}

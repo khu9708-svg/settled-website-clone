@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Header } from '@/components/settled/header'
 import { Footer } from '@/components/settled/footer'
 import { DeliveryOptions } from '@/components/settled/delivery-options'
 import { postEngineScan, validateEngineUpload } from '@/lib/engine-client'
 import { makeCaseTitle, saveDisputeCase } from '@/lib/dispute-cases'
+import { useForensicOperator } from '@/lib/use-forensic-operator'
+import { useSession } from 'next-auth/react'
 
 const reviewItems = [
   'Dun & Bradstreet PAYDEX, DUNS records, vendor tradelines, and payment history issues',
@@ -16,6 +18,9 @@ const reviewItems = [
 ]
 
 export default function BusinessPage() {
+  const forensicOperator = useForensicOperator()
+  const { status } = useSession()
+  const [businessAccess, setBusinessAccess] = useState<'checking' | 'allowed' | 'blocked'>('checking')
   const [pastedText, setPastedText] = useState('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -23,6 +28,34 @@ export default function BusinessPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [deliveryEmail, setDeliveryEmail] = useState('')
+  const hasInput = Boolean(uploadedFile) || pastedText.trim().length > 0
+
+  useEffect(() => {
+    if (status === 'loading') {
+      setBusinessAccess('checking')
+      return
+    }
+
+    if (status === 'unauthenticated') {
+      setBusinessAccess('blocked')
+      return
+    }
+
+    const abortController = new AbortController()
+    async function loadPlanAccess() {
+      try {
+        const response = await fetch('/api/payments', { signal: abortController.signal })
+        const data = await response.json()
+        const unlocked = Boolean(data?.subscription?.entitlements?.businessDomainUnlock)
+        const active = data?.subscription?.planStatus === 'active'
+        setBusinessAccess(unlocked && active ? 'allowed' : 'blocked')
+      } catch {
+        setBusinessAccess('blocked')
+      }
+    }
+    loadPlanAccess()
+    return () => abortController.abort()
+  }, [status])
 
   const copyLetter = async () => {
     if (!result?.response) return
@@ -87,8 +120,13 @@ export default function BusinessPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!uploadedFile) {
-      setError('Upload a PDF to continue. /api/ingest is strict PDF-only.')
+    if (businessAccess !== 'allowed') {
+      setError('Business Engine tier is required to run this domain. Upgrade to unlock business-credit forensics.')
+      return
+    }
+
+    if (!hasInput) {
+      setError('Upload a supported file (.pdf, .doc, .docx) or paste account text to continue.')
       return
     }
 
@@ -102,6 +140,7 @@ export default function BusinessPage() {
       const formData = new FormData()
       if (uploadedFile) formData.append('document', uploadedFile)
       if (pastedText.trim()) formData.append('text', pastedText.trim())
+      formData.append('domain_hint', 'business-credit')
 
       const data = await postEngineScan('/api/ingest', formData)
 
@@ -167,6 +206,9 @@ export default function BusinessPage() {
               <h2 className="text-2xl font-semibold text-white">
                 Upload or paste the business record
               </h2>
+              <p className="settled-tech mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[#7BA4FF]">
+                Forensic Profile: {forensicOperator}
+              </p>
               <p
                 className="mt-4 text-lg font-semibold leading-[1.55] text-white md:text-xl"
                 style={{ fontFamily: 'var(--font-plus-jakarta-sans)' }}
@@ -177,15 +219,20 @@ export default function BusinessPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {businessAccess !== 'allowed' && (
+                <div className="rounded-xl border border-[#2563EB]/35 bg-[#071126] p-4 text-sm text-[#AFC8FF]">
+                  Business credit forensics is tier-gated. <a className="font-semibold underline" href="/pricing?domain=business-credit">Activate Business Engine</a> to unlock this domain.
+                </div>
+              )}
               {/* File Upload */}
               <div>
                 <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.08em] text-white/80">
-                  Upload PDF
+                  Upload Document
                 </label>
                 <div className="relative">
                   <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.doc,.docx"
                     onChange={handleFileChange}
                     className="settled-input w-full rounded-xl px-4 py-4 text-base focus:outline-none focus:border-[#2563EB] file:mr-4 file:rounded-md file:border-0 file:bg-[#2563EB] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
                   />
@@ -207,7 +254,7 @@ export default function BusinessPage() {
               {/* Paste Text */}
               <div>
                 <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.08em] text-white/80">
-                  Optional Supplemental Context
+                  Paste Report Text (No File Required)
                 </label>
                 <textarea
                   value={pastedText}
@@ -216,7 +263,7 @@ export default function BusinessPage() {
                     setError('')
                     setNotice('')
                   }}
-                  placeholder="Optional: add context that should be read with the uploaded PDF (DUNS details, tradeline notes, and date clarifications)..."
+                  placeholder="Paste business-report text directly, or combine pasted details with an uploaded file..."
                   className="settled-input h-52 w-full rounded-xl p-5 text-base leading-relaxed focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
@@ -224,10 +271,10 @@ export default function BusinessPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading || !uploadedFile}
-                className="w-full h-auto rounded-xl bg-[#2563EB] px-6 py-4 text-base font-semibold text-white shadow-[0_18px_50px_rgba(37,99,235,0.28)] transition-colors hover:bg-[#2563EB]/90 disabled:opacity-50"
+                disabled={loading || !hasInput || businessAccess !== 'allowed'}
+                className="settled-tech w-full h-auto rounded-xl bg-[#2563EB] px-6 py-4 text-base font-semibold text-white shadow-[0_18px_50px_rgba(37,99,235,0.28)] transition-colors hover:bg-[#2563EB]/90 disabled:opacity-50"
               >
-                {loading ? 'Analyzing...' : 'Build My Business Credit'}
+                {loading ? 'Analyzing...' : businessAccess === 'allowed' ? 'Build My Business Credit' : 'Business Tier Required'}
               </button>
               <p className="text-sm font-medium leading-relaxed text-white/50">
                 Use this engine for business credit information you believe is inaccurate, incomplete, unverifiable, or
@@ -252,6 +299,21 @@ export default function BusinessPage() {
           {/* Results Section */}
           {result && (
             <div className="space-y-6">
+              {Array.isArray(result.warnings) && result.warnings.length > 0 && (
+                <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-5">
+                  <p className="settled-tech text-xs font-bold uppercase tracking-[0.14em] text-amber-100">
+                    Forensic Intake Warnings
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {result.warnings.map((warning: string) => (
+                      <li key={warning} className="text-sm font-medium leading-relaxed text-amber-100/90">
+                        {warning}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {result.summary && (
                 <div className="settled-paper rounded-xl p-5">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7BA4FF]">
@@ -300,6 +362,9 @@ export default function BusinessPage() {
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-2xl font-semibold text-white">Dispute Letter</h2>
+                    <p className="settled-tech text-[11px] font-bold uppercase tracking-[0.16em] text-[#7BA4FF]">
+                      Operator: {forensicOperator}
+                    </p>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -324,7 +389,7 @@ export default function BusinessPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="settled-paper rounded-xl p-5 max-h-96 overflow-y-auto">
+                  <div className="settled-paper rounded-xl p-5 overflow-visible">
                     <p className="whitespace-pre-wrap text-base font-medium leading-relaxed text-white/86">
                       {result.response}
                     </p>
