@@ -9,33 +9,33 @@ const steps = [
   {
     number: "01",
     title: "Upload the document",
-    body: "Start with the report or loan statement in front of you. Upload a PDF or paste the details that look wrong.",
+    body: "Drop the servicer statement, bureau report, or collection letter that keeps showing wrong numbers. PDF upload or pasted text — whatever you have in front of you.",
     image: "/images/student-loan.png",
   },
   {
     number: "02",
-    title: "SETTLED reads for reporting problems",
-    body: "The engine looks for inaccurate, incomplete, outdated, unverifiable, or protected-period reporting issues.",
+    title: "The unified forensic engine reads for reporting failures",
+    body: "MOHELA balance drift, Navient duplicate tradelines, tax lien date errors, ChexSystems flags, LexisNexis mismatches — the engine scans for inaccurate, incomplete, outdated, unverifiable, or protected-period reporting.",
     image: "/images/credit-error.png",
   },
   {
     number: "03",
-    title: "You see the issue before any letter is used",
-    body: "Potential violations, statutes, confidence, and plain-English context appear on the same screen for review.",
+    title: "You see every discrepancy before any letter ships",
+    body: "Potential FCRA violations, cited statutes, confidence scoring, and plain-English context on the same screen. No hidden findings. No forced dispute when nothing reportable exists.",
     image: "/images/story-man.png",
   },
   {
     number: "04",
-    title: "A document-specific letter is created",
-    body: "The letter is written around the facts in the document, not a generic template. If the scan does not find a reportable issue, we say that plainly.",
+    title: "A document-specific dispute letter is compiled",
+    body: "The letter is built from the facts in your upload, not a fill-in-the-blank template. If the engine does not find a reportable issue, it reports Status: Clean — no weak letter, no false hope.",
     image: "/images/usps-mail.png",
   },
 ]
 
 const nextSteps = [
-  "Download the letter and review it before sending.",
-  "Use certified mail when a paper trail matters.",
-  "Track the response window and escalate only when the facts support it.",
+  "Review the statute-mapped findings and dispute letter before sending.",
+  "Route through certified mail when a furnisher or bureau response window matters.",
+  "Track delivery evidence and escalate only when the documented facts support it.",
 ]
 
 export function HowItWorks() {
@@ -94,11 +94,11 @@ export function HowItWorks() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7BA4FF]">The Process</p>
           <h2 className="mt-4 max-w-xl text-3xl font-semibold leading-[1.02] text-white md:text-5xl">
-            A clean path from document to dispute.
+            From servicer statement to FCRA dispute — one forensic pass.
           </h2>
         </div>
         <p className="max-w-2xl text-lg font-bold leading-relaxed text-white/75">
-          SETTLED is built for people who need to understand what is wrong, what law may apply, and what to do next without paying hundreds before they even know if they have a real issue.
+          Built for borrowers who watched MOHELA misreport a balance, saw a tax lien survive a release, or got denied because ChexSystems still flags an account they closed years ago. You deserve to know what is wrong, which statute applies, and what to send next — without paying hundreds just to find out if you have a real issue.
         </p>
       </Stagger>
 
@@ -123,8 +123,10 @@ export function HowItWorks() {
         className="mt-5 grid gap-4 rounded-xl border border-[#2563EB]/25 bg-[#07101f] p-5 md:grid-cols-[0.9fr_1.1fr] md:p-7"
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7BA4FF]">After the scan</p>
-          <h3 className="mt-3 text-2xl font-semibold leading-tight text-white">The software gives you direction, not false promises.</h3>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7BA4FF]">After the audit</p>
+          <h3 className="mt-3 text-2xl font-semibold leading-tight text-white">
+            The unified forensic engine delivers statute-backed findings — not marketing spin.
+          </h3>
         </div>
         <ul className="space-y-3">
           {nextSteps.map((item) => (

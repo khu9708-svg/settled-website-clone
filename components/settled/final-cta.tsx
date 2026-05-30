@@ -9,32 +9,32 @@ export function FinalCTA() {
         <Stagger className="mx-auto flex max-w-2xl flex-col items-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2563EB]/40 bg-[#2563EB]/10 px-3 py-1 text-[11px] font-semibold text-[#7BA4FF]">
             <ShieldCheck className="size-3.5" />
-            Get started in 60 seconds.
+            Unified forensic engine — live now.
           </span>
           <h2 className="mt-5 text-balance text-3xl font-bold leading-tight lg:text-5xl">
-            Start with the student loan record that keeps bothering you.
+            That MOHELA balance is wrong. Prove it.
           </h2>
           <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground lg:text-base">
-            Run a focused scan, review the possible violations, and generate a letter that is based on your document,
-            not a generic template.
+            Run a forensic student loan audit, review statute-mapped violations, and generate an FCRA dispute letter
+            compiled from your document — not a chatbot template.
           </p>
           <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button
               asChild
               className="h-auto whitespace-nowrap px-6 py-3 font-semibold bg-[#2563EB] text-white hover:bg-[#2563EB]/90"
             >
-              <a href="/student-loans">Scan My Student Loans</a>
+              <a href="/student-loans">Run Student Loan Audit</a>
             </Button>
             <Button
               asChild
               variant="outline"
               className="h-auto whitespace-nowrap px-6 py-3 font-semibold border-border bg-transparent text-foreground hover:bg-secondary"
             >
-              <a href="/pricing">See Affordable Pricing</a>
+              <a href="/pricing">See Pricing</a>
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            No guaranteed outcomes. No factual-debt games. Just document review, dispute letters, and tracked next steps.
+            No guaranteed outcomes. No factual-debt disputes. Document review, statute-cited letters, tracked delivery.
           </p>
         </Stagger>
       </div>

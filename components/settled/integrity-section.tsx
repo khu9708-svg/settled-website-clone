@@ -2,22 +2,22 @@ const identityRows = [
   {
     key: "ORIGIN",
     value:
-      "Built after direct exposure to financial reporting failure, dispute confusion, and inaccessible credit documentation systems.",
+      "Built after direct exposure to servicer misreporting, bureau stonewalling, and credit documentation systems designed to exhaust borrowers before they ever see the discrepancy.",
   },
   {
     key: "MISSION",
     value:
-      "To provide borrowers with the forensic capability to identify and dispute non-factual reporting errors.",
+      "To give borrowers forensic-grade capability to identify and dispute non-factual reporting errors — student loans, credit tradelines, tax liens, ChexSystems, LexisNexis, and EWS.",
   },
   {
     key: "BOUNDARY",
     value:
-      "SETTLED does not dispute factual debts. SETTLED audits for reporting errors. If no issue exists, the system reports it plainly.",
+      "SETTLED does not dispute factual debts. SETTLED audits for reporting errors. If no issue exists, the unified forensic engine reports Status: Clean.",
   },
   {
     key: "METHOD",
     value:
-      "Document intake, issue extraction, statute reference, dispute-letter compilation, and tracked next-step record.",
+      "Unified intake, domain classification, statutory library injection, discrepancy extraction, FCRA dispute-letter compilation, and tracked delivery record.",
   },
 ]
 

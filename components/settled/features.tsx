@@ -2,20 +2,20 @@ import { Stagger } from "@/components/settled/stagger"
 
 const features = [
   {
-    title: "Start with one document",
-    body: "Run a single scan before committing to a monthly plan. SETTLED should prove useful before it asks for more money.",
+    title: "Prove value before you pay",
+    body: "Run one forensic audit before committing to a monthly plan. The unified forensic engine should earn your trust with findings, not promises.",
   },
   {
-    title: "Document-specific letters",
-    body: "The letter is built from the facts you provide, the issue detected, and the statutes that may apply to that issue.",
+    title: "Document-specific FCRA letters",
+    body: "Every dispute letter is compiled from your upload facts, the discrepancy detected, and the statutes the engine mapped to that issue.",
   },
   {
-    title: "Honest scan results",
-    body: "If the document does not show a reportable dispute issue, the experience should say that clearly instead of forcing a weak letter.",
+    title: "Honest audit output",
+    body: "If the document shows no reportable issue, the engine reports Status: Clean — no weak letter forced through to justify a charge.",
   },
   {
-    title: "Review before sending",
-    body: "Users see the findings and letter before using them. SETTLED does not replace legal advice or guarantee deletions.",
+    title: "Review before you send",
+    body: "See every finding and the full letter before delivery. SETTLED does not replace legal counsel or guarantee deletions.",
   },
 ]
 

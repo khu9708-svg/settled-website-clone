@@ -5,22 +5,22 @@ const steps = [
   {
     icon: FileUp,
     title: "Upload or paste",
-    body: "Start with a student loan record, credit report, servicer notice, collection letter, or bureau response.",
+    body: "Student loan servicer records, credit bureau files, tax lien notices, ChexSystems reports, LexisNexis entries, or EWS banking flags — whatever document proves the reporting error.",
   },
   {
     icon: SearchCheck,
-    title: "Scan for errors",
-    body: "SETTLED looks for possible inaccurate, incomplete, unauthorized, duplicate, or misreported information.",
+    title: "Forensic credit audit",
+    body: "The unified forensic engine scans for inaccurate, incomplete, unauthorized, duplicate, or misreported information across every domain in your upload.",
   },
   {
     icon: FileText,
-    title: "Generate a letter",
-    body: "Every letter is built from the user's document facts, not a generic fill-in-the-blank template.",
+    title: "FCRA dispute letter",
+    body: "Every letter is compiled from your document facts and cited statutes — not a generic template pulled from a chatbot.",
   },
   {
     icon: MailCheck,
     title: "Track the next step",
-    body: "Download the letter, send it, document delivery, and know when a bureau or furnisher response matters.",
+    body: "Download the letter, send it, document certified-mail delivery, and know exactly when a bureau or furnisher response window opens.",
   },
 ]
 
@@ -34,11 +34,13 @@ export function WhatSettledDoes() {
               What SETTLED Is
             </p>
             <h2 className="mt-4 text-pretty text-3xl font-semibold leading-[1.05] text-white lg:text-[44px]">
-              Student loan dispute software first. Credit, collections, and business disputes when you need them.
+              A unified forensic engine for student loan audits, FCRA disputes, and bureau accountability.
             </h2>
             <p className="mt-5 text-base leading-relaxed text-white/60">
-              SETTLED was built for people who cannot afford hundreds of dollars just to understand what is wrong.
-              If the document shows a real reporting issue, we help organize the dispute. If we do not find one, we say so.
+              Built for people who watched MOHELA report the wrong balance, Navient duplicate a loan, or a tax lien
+              linger after release — and got told to &ldquo;just call the servicer.&rdquo; If your document shows a
+              real reporting failure, the engine organizes the dispute. If it does not, you get a clean status — no
+              weak letter, no upsell.
             </p>
           </div>
 
