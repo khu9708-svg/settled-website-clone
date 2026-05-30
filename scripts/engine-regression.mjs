@@ -2,6 +2,7 @@ import {
   runUnifiedForensicAudit,
   triageDocument,
 } from '../lib/unified-forensic-orchestrator.ts';
+import { apexSovereignAudit } from '../lib/hard-lock.ts';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -37,14 +38,21 @@ No account, bureau, servicer, vendor, credit, or reporting information appears h
 const mixed = triageDocument(mixedCreditReport);
 assert(mixed.document_type === 'consumer-credit', `Expected mixed credit report to classify as consumer-credit, got ${mixed.document_type}`);
 assert(mixed.hasCreditReportStructure, 'Expected mixed credit report structure to be detected');
-const mixedAudit = runUnifiedForensicAudit(mixedCreditReport);
+const mixedAudit = runUnifiedForensicAudit(mixedCreditReport, 'Test Operator');
 assert(mixedAudit.violations.length >= 2, 'Expected credit report violations');
 assert(mixedAudit.injected_libraries.includes('student-loan'), 'Expected student loan library to inject for student tradelines inside credit report');
 assert(mixedAudit.forensic_trace.steps.length === mixedAudit.violations.length, 'Expected forensic trace step for each finding');
+assert(mixedAudit.triangulation_report, 'Expected triangulation report on processed audit');
+assert(mixedAudit.triangulation_report.engine_version.includes('apex-v3'), 'Expected apex v3 engine version');
+assert(mixedAudit.triangulation_report.federal_findings.length >= 1, 'Expected federal pass findings');
+assert(['verified', 'reconciled', 'clean'].includes(mixedAudit.triangulation_report.triangulation_status), 'Expected valid triangulation status');
+assert(mixedAudit.response.includes('Test Operator') || mixedAudit.response.startsWith('Status: Clean'), 'Expected operator personalization or clean status');
 
 const student = triageDocument(studentLoanRecord);
 assert(student.document_type === 'student-loan', `Expected student loan record, got ${student.document_type}`);
-assert(runUnifiedForensicAudit(studentLoanRecord).violations.length >= 1, 'Expected student loan violation');
+const studentAudit = runUnifiedForensicAudit(studentLoanRecord);
+assert(studentAudit.violations.length >= 1, 'Expected student loan violation');
+assert(studentAudit.triangulation_report?.federal_findings.length >= 1, 'Expected federal findings on student loan audit');
 
 const business = triageDocument(businessCreditRecord);
 assert(business.document_type === 'business-credit', `Expected business record, got ${business.document_type}`);
@@ -52,5 +60,9 @@ assert(runUnifiedForensicAudit(businessCreditRecord).violations.length >= 2, 'Ex
 
 const unknown = runUnifiedForensicAudit(unrelatedDocument);
 assert(unknown.processing_status === 'unprocessable', `Expected unprocessable document, got ${unknown.processing_status}`);
+
+const apex = await apexSovereignAudit(studentLoanRecord, 'Async Operator');
+assert(apex.triangulation.procedural_findings.length >= 0, 'Expected procedural pass to complete');
+assert(apex.dispute.escalation_level !== undefined, 'Expected dispute escalation level from apex audit');
 
 console.log('Engine regression checks passed');

@@ -384,7 +384,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const audit = runUnifiedForensicAudit(documentText);
+    const operatorName = session?.user?.name || session?.user?.email?.split('@')[0] || undefined;
+    const audit = runUnifiedForensicAudit(documentText, operatorName);
     titanLog({
       event: 'forensic_ingest',
       analysisId: audit.analysis_id,
@@ -434,6 +435,17 @@ export async function POST(request: NextRequest) {
       degraded: warnings.length > 0,
       warnings,
       message: warnings[0],
+      triangulation: audit.triangulation_report
+        ? {
+            status: audit.triangulation_report.triangulation_status,
+            severity_tier: audit.triangulation_report.severity_tier,
+            federal_count: audit.triangulation_report.federal_findings.length,
+            state_count: audit.triangulation_report.state_findings.length,
+            procedural_count: audit.triangulation_report.procedural_findings.length,
+            shadow_killed: audit.triangulation_report.shadow_verification.killed_findings.length,
+            engine_version: audit.triangulation_report.engine_version,
+          }
+        : undefined,
     });
   } catch (error) {
     const details = error instanceof Error ? error.message : String(error);
