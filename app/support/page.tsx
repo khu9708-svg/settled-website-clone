@@ -60,6 +60,12 @@ export default function SupportPage() {
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
           Customers need to know there is a real support path and clear boundaries before uploading sensitive documents.
         </p>
+        <p className="mt-3 max-w-3xl text-sm font-semibold leading-relaxed text-[#AFC8FF]">
+          If your file feels wrong, you are not crazy. Reporting errors are real, and SETTLED is built to help you review them with a clear documented path.
+        </p>
+        <p className="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-white/58">
+          Keep sensitive records in secure intake only. SETTLED provides educational reporting support, not legal advice and not guaranteed outcomes.
+        </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {contactItems.map((item) => (

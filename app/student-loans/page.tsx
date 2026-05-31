@@ -147,6 +147,9 @@ export default function StudentLoansPage() {
             Upload a PDF or paste your loan details. SETTLED checks for possible reporting problems and generates a
             document-specific dispute letter. If the scan does not find a reportable issue, we say that plainly.
           </p>
+          <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed text-[#AFC8FF]">
+            You are not imagining this — student loan reporting mistakes happen, and you can follow a clear path to review them.
+          </p>
         </div>
 
         <div className="mb-10 divide-y divide-white/10 border border-white/12 bg-[#030303]">
@@ -239,6 +242,9 @@ export default function StudentLoansPage() {
               <p className="text-sm font-medium leading-relaxed text-white/50">
                 By scanning, you agree to use SETTLED only for information you believe is inaccurate, incomplete,
                 unverifiable, unauthorized, or misreported. SETTLED is not a law firm and does not provide legal advice.
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-white/55">
+                Upload sensitive documents only through this secure intake flow. Do not send reports through casual email.
               </p>
             </form>
 

@@ -1,58 +1,9 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { postEngineScan, validateEngineUpload } from "@/lib/engine-client"
+import { useRef } from "react"
 import { gsap, useGSAP } from "@/lib/gsap"
-import { useForensicOperator } from "@/lib/use-forensic-operator"
-
-const modules = [
-  {
-    code: "01",
-    label: "STUDENT LOAN AUDIT",
-    href: "/student-loans",
-    detail: "MOHELA / Navient / Aidvantage / PSLF / IDR / forbearance misreporting",
-    active: true,
-  },
-  {
-    code: "02",
-    label: "FORENSIC CREDIT AUDIT",
-    href: "/disputes",
-    detail: "FCRA dispute / collections / charge-offs / validation failures",
-  },
-  {
-    code: "03",
-    label: "TAX LIENS & BUSINESS",
-    href: "/business",
-    detail: "Tax liens / D&B / PAYDEX / vendor tradeline errors",
-  },
-  {
-    code: "04",
-    label: "AUXILIARY BUREAUS",
-    href: "/pricing",
-    detail: "ChexSystems / LexisNexis / EWS / certified-mail evidence chain",
-  },
-]
-
-type AnalysisResult = {
-  violations?: Array<{ item?: string; statute?: string; severity?: string; description?: string }>
-  confidence?: number
-  response?: string
-  summary?: string
-  error?: string
-  message?: string
-  warnings?: string[]
-}
 
 export function Hero() {
-  const forensicOperator = useForensicOperator()
-  const [text, setText] = useState("")
-  const [fileName, setFileName] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [logs, setLogs] = useState<string[]>([">_ AWAITING DOCUMENT OR TEXT INPUT"])
-  const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [error, setError] = useState("")
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
   useGSAP(
@@ -60,32 +11,30 @@ export function Hero() {
       const section = sectionRef.current
       if (!section) return
 
-      const modules = section.querySelectorAll("[data-hero-module]")
       const content = section.querySelectorAll("[data-hero-content]")
+      const visual = section.querySelector("[data-hero-visual]")
 
       const mm = gsap.matchMedia()
 
       mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set([modules, content], { autoAlpha: 1, x: 0, y: 0 })
+        gsap.set([content, visual], { autoAlpha: 1, x: 0, y: 0 })
       })
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
-
-        tl.from(modules, {
+        tl.from(content, {
           autoAlpha: 0,
-          x: -14,
-          duration: 0.7,
-          stagger: 0.07,
+          y: 24,
+          duration: 0.85,
+          stagger: 0.1,
         }).from(
-          content,
+          visual,
           {
             autoAlpha: 0,
-            y: 22,
-            duration: 0.85,
-            stagger: 0.09,
+            x: 32,
+            duration: 1.1,
           },
-          "-=0.35",
+          "-=0.55",
         )
       })
 
@@ -94,214 +43,364 @@ export function Hero() {
     { scope: sectionRef },
   )
 
-  const hasPastedText = text.trim().length > 0
-  const canScan = useMemo(() => fileName.length > 0 || hasPastedText, [fileName, hasPastedText])
-
-  async function handleFile(file?: File) {
-    if (!file) return
-    const uploadError = validateEngineUpload(file)
-    if (uploadError) {
-      setFileName("")
-      setError(uploadError)
-      return
-    }
-    setFileName(file.name)
-    setError("")
-    setLogs([`>_ DOCUMENT RECEIVED: ${file.name}`, ">_ READY FOR UNIFIED TRIAGE"])
-  }
-
-  async function runScan() {
-    if (!canScan || loading) return
-    if (!fileInputRef.current?.files?.[0] && !hasPastedText) {
-      setError("Provide a supported file upload (.pdf, .doc, .docx) or paste account text to continue.")
-      return
-    }
-    setLoading(true)
-    document.documentElement.dataset.focusMode = "true"
-    setError("")
-    setResult(null)
-    setLogs([
-      ">_ TRIAGE_AGENT: CLASSIFYING_DOMAIN",
-      ">_ RULE_INJECTION: LOADING_STATUTORY_LIBRARY",
-      ">_ DETERMINISTIC_CORE: MATCHING_DOCUMENT_FACTS",
-    ])
-
-    try {
-      const formData = new FormData()
-      if (fileInputRef.current?.files?.[0]) formData.append("document", fileInputRef.current.files[0])
-      if (text.trim()) formData.append("text", text.trim())
-      formData.append("domain_hint", "student-loan")
-      const data = (await postEngineScan("/api/ingest", formData)) as AnalysisResult
-
-      setResult(data)
-      const warningLines =
-        data.warnings?.map((warning) => `>_ RECOVERY_WARNING: ${warning.toUpperCase()}`) || []
-      setLogs((current) => [
-        ...current,
-        `>_ COMPILED: ${data.violations?.length || 0}_POSSIBLE_ISSUES`,
-        `>_ CONFIDENCE: ${data.confidence || "REVIEW"}%`,
-        ...warningLines,
-        ">_ OUTPUT_READY: DISPUTE_LETTER",
-      ])
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Analysis failed"
-      setError(message)
-      setLogs((current) => [...current, ">_ OUTPUT_ERROR: MANUAL_REVIEW_REQUIRED"])
-    } finally {
-      delete document.documentElement.dataset.focusMode
-      setLoading(false)
-    }
-  }
-
   return (
-    <section ref={sectionRef} id="solutions" className="relative overflow-hidden border-b border-white/[0.08] bg-black">
-      <video
-        className="absolute inset-0 h-full w-full object-cover opacity-[0.05]"
-        src="/videos/hero.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        aria-hidden="true"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.9)_47%,rgba(0,0,0,0.82)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_74%_28%,rgba(37,99,235,0.18),transparent_25%)]" />
+    <section
+      ref={sectionRef}
+      id="solutions"
+      className="relative overflow-hidden border-b border-white/[0.08]"
+      style={{ background: "#050816", minHeight: "calc(100vh - 64px)" }}
+    >
+      {/* Background depth gradients */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        {/* Large diffuse right-half blue-purple atmospheric bloom */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-20%",
+            right: "-15%",
+            width: "80%",
+            height: "140%",
+            background:
+              "radial-gradient(ellipse at 70% 45%, rgba(37,99,255,0.18) 0%, rgba(37,99,255,0.07) 30%, rgba(20,30,80,0.04) 55%, transparent 70%)",
+            filter: "blur(2px)",
+          }}
+        />
+        {/* Secondary deep-blue haze for right panel depth */}
+        <div
+          style={{
+            position: "absolute",
+            top: "10%",
+            right: "0",
+            width: "55%",
+            height: "80%",
+            background:
+              "radial-gradient(ellipse at 80% 50%, rgba(37,99,255,0.10) 0%, transparent 60%)",
+          }}
+        />
+        {/* Soft left-side dark warmth */}
+        <div
+          style={{
+            position: "absolute",
+            top: "20%",
+            left: "0",
+            width: "45%",
+            height: "60%",
+            background:
+              "radial-gradient(ellipse at 20% 50%, rgba(10,15,40,0.85) 0%, transparent 70%)",
+          }}
+        />
+      </div>
 
-      <div className="relative mx-auto grid min-h-[calc(100vh-80px)] max-w-[1200px] gap-8 px-4 py-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-        <aside className="order-2 grid gap-2 lg:order-1">
-          {modules.map((module) => (
-            <a
-              key={module.code}
-              data-hero-module
-              href={module.href}
-              className={`group grid grid-cols-[44px_1fr] gap-4 border px-4 py-4 transition ${
-                module.active
-                  ? "border-[#2563EB]/55 bg-[#2563EB]/10"
-                  : "border-white/[0.09] bg-white/[0.018] hover:border-white/22 hover:bg-white/[0.035]"
-              }`}
+      {/* Main grid — upper-half placement matching mockup */}
+      <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-[1200px] items-start px-5 pt-[18vh] pb-20 sm:px-8 lg:pb-0">
+        <div className="grid w-full items-start gap-12 lg:grid-cols-[1fr_420px] xl:grid-cols-[1fr_480px]">
+
+          {/* ── Left: text hierarchy ── */}
+          <div className="flex flex-col">
+
+            {/* 1. SETTLED wordmark */}
+            <h1
+              data-hero-content
+              className="flex items-center font-bold uppercase text-white"
+              aria-label="SETTLED"
+              style={{
+                fontSize: "clamp(3.6rem, 9.5vw, 8rem)",
+                letterSpacing: "0.1em",
+                lineHeight: 1,
+              }}
             >
-              <span className="text-sm font-bold tracking-[0.18em] text-[#7BA4FF]">{module.code}</span>
-              <span>
-                <span className="block text-[15px] font-bold uppercase tracking-[0.08em] text-white">{module.label}</span>
-                <span className="mt-1 block text-sm font-medium leading-relaxed text-white/52">{module.detail}</span>
+              <span>S</span>
+              {/* Three-bar equal symbol — white / blue / white — mirrors logo.tsx */}
+              <span
+                className="mx-[0.06em] flex flex-col justify-between"
+                aria-hidden="true"
+                style={{ width: "0.46em", height: "0.30em" }}
+              >
+                <span style={{ display: "block", height: "0.055em", background: "rgba(255,255,255,0.92)", borderRadius: "1px" }} />
+                <span style={{ display: "block", height: "0.055em", background: "#2563FF", borderRadius: "1px", boxShadow: "0 0 10px rgba(37,99,255,0.85)" }} />
+                <span style={{ display: "block", height: "0.055em", background: "rgba(255,255,255,0.92)", borderRadius: "1px" }} />
               </span>
-            </a>
-          ))}
-        </aside>
+              <span>TTLED</span>
+            </h1>
 
-        <div className="order-1 lg:order-2">
-          <div data-hero-content className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#7BA4FF]">Forensic Dispute Command</p>
-            <p className="hidden text-[11px] font-bold uppercase tracking-[0.18em] text-white/35 sm:block">System Online</p>
+            {/* 2. Tagline */}
+            <p
+              data-hero-content
+              className="mt-3 font-medium text-white/55"
+              style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)", letterSpacing: "0.01em" }}
+            >
+              The <span style={{ color: "#2563FF" }}>First</span> Student Loan Dispute Service™
+            </p>
+
+            {/* 3. DISPUTE. RESOLVE. MOVE FORWARD. */}
+            <p
+              data-hero-content
+              className="mt-5 font-bold uppercase text-white/90"
+              style={{ fontSize: "clamp(0.85rem, 1.9vw, 1.2rem)", letterSpacing: "0.3em" }}
+            >
+              DISPUTE.{" "}
+              <span style={{ color: "#2563FF" }}>RESOLVE.</span>{" "}
+              MOVE FORWARD.
+            </p>
+
+            {/* 4. Differentiator slogan — research-backed placement: between tagline and CTA */}
+            <p
+              data-hero-content
+              className="mt-4 font-medium text-white/70"
+              style={{ fontSize: "clamp(0.85rem, 1.4vw, 1rem)", letterSpacing: "0.005em" }}
+            >
+              Most services hand you a template.{" "}
+              <span className="text-white font-semibold">Settled reads your actual documents.</span>
+            </p>
+
+            {/* 5. Plain-language body — 6th grade, active voice */}
+            <p
+              data-hero-content
+              className="mt-3 max-w-[460px] leading-relaxed text-white/45"
+              style={{ fontSize: "clamp(0.875rem, 1.3vw, 0.95rem)" }}
+            >
+              Upload your student loan record. We find the errors. You get a dispute letter — built from your facts, not a generic form.
+            </p>
+
+            {/* 6. Built-in mail highlight — key differentiator */}
+            <div
+              data-hero-content
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#2563FF]/30 bg-[#2563FF]/[0.08] px-3 py-1.5"
+              style={{ width: "fit-content" }}
+            >
+              <span style={{ color: "#2563FF", fontSize: "0.7rem" }}>✉</span>
+              <span className="text-[0.72rem] font-medium text-white/65" style={{ letterSpacing: "0.02em" }}>
+                Built-in certified mail tracking — we send it for you
+              </span>
+            </div>
+
+            {/* 7. CTA buttons */}
+            <div data-hero-content className="mt-7 flex flex-wrap items-center gap-5">
+              <a
+                href="/get-started"
+                className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563FF]"
+                style={{
+                  background: "#2563FF",
+                  boxShadow: "0 0 22px rgba(37,99,255,0.42), 0 1px 4px rgba(0,0,0,0.5)",
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Start Your Review →
+              </a>
+              <a
+                href="/how-it-works"
+                className="inline-flex items-center gap-1.5 font-medium text-white/60 transition-colors hover:text-white"
+                style={{ fontSize: "0.82rem" }}
+              >
+                How It Works ›
+              </a>
+            </div>
           </div>
 
-          <h1
-            data-hero-content
-            className="max-w-3xl text-pretty text-[clamp(3rem,6vw,6rem)] font-semibold uppercase leading-[0.87] text-white"
-          >
-            Forensic credit audit and student loan dispute intelligence, built for real reporting errors.
-          </h1>
-          <p data-hero-content className="mt-6 max-w-2xl text-lg font-semibold leading-[1.55] text-white/68">
-            Upload a PDF or paste account details. SETTLED&apos;s unified forensic engine runs a deterministic
-            student loan audit and FCRA dispute pass — cites the discrepancy, maps the statute, and compiles a
-            document-specific letter. Dispute reporting errors, not factual debts.
-          </p>
-
+          {/* ── Right: 3D equal-bars visual + product proof panel ── */}
           <div
-            data-hero-content
-            className="mt-8 border border-white/12 bg-[#030303]/90 shadow-[0_34px_120px_rgba(0,0,0,0.7)]"
+            data-hero-visual
+            className="hidden flex-col items-center gap-6 lg:flex"
+            aria-hidden="false"
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">Input Terminal</p>
-              <div className="text-right">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BA4FF]">Unified Forensic Engine</p>
-                <p className="settled-tech text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
-                  Operator: {forensicOperator}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-0 lg:grid-cols-[1fr_0.92fr]">
-              <div className="border-white/10 p-4 lg:border-r">
-                <textarea
-                  value={text}
-                  onChange={(event) => {
-                    setText(event.target.value)
-                    setError("")
-                    if (event.target.value.trim().length > 8) {
-                      setLogs([">_ TEXT_STREAM_RECEIVED", ">_ READY FOR DIRECT FORENSIC TRIAGE"])
-                    }
-                  }}
-                  placeholder="Paste account/report text directly (no file required), or add context to combine with an uploaded file..."
-                  className="min-h-[178px] w-full resize-none bg-transparent text-base font-semibold leading-relaxed text-white outline-none placeholder:text-white/32"
-                />
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={(event) => handleFile(event.target.files?.[0])}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-11 rounded-none border-white/14 bg-transparent px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-white/[0.06]"
-                  >
-                    Upload File
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={!canScan || loading}
-                    onClick={runScan}
-                    className="h-11 rounded-none bg-[#2563EB] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#2563EB]/90 disabled:opacity-45"
-                  >
-                    {loading ? "Auditing" : "Run Audit"}
-                  </Button>
-                </div>
-                {fileName ? <p className="mt-3 text-xs font-bold uppercase tracking-[0.1em] text-[#7BA4FF]">{fileName}</p> : null}
-                {error ? <p className="mt-3 border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200">{error}</p> : null}
-                {result?.warnings?.length ? (
-                  <div className="mt-3 border border-amber-400/25 bg-amber-400/10 px-3 py-2">
-                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-amber-100">Recovery Warnings</p>
-                    <ul className="mt-2 space-y-1 text-sm font-semibold text-amber-100/90">
-                      {result.warnings.map((warning) => (
-                        <li key={warning}>{warning}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-white/42">
-                  /api/ingest accepts text, PDF, and Word uploads.
-                </p>
-              </div>
-
-              <div className="p-4">
-                <div className="min-h-[178px] space-y-2 font-mono text-[13px] font-bold uppercase tracking-[0.08em] text-white/66">
-                  {logs.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
-                </div>
-                {result ? (
-                  <div className="border-t border-white/10 pt-4">
-                    <p className="text-sm font-bold uppercase tracking-[0.14em] text-white">Audit Output</p>
-                    <p className="settled-tech mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7BA4FF]">
-                      Forensic Profile: {forensicOperator}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold leading-relaxed text-white/62">
-                      {result.summary || result.violations?.[0]?.item || "Document-specific result compiled."}
-                    </p>
-                    <a href="/student-loans" className="mt-4 inline-flex text-sm font-bold uppercase tracking-[0.08em] text-[#7BA4FF] hover:text-white">
-                      Open full student loan workspace
-                    </a>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            <EqualBarsVisual />
+            <ForensicProofPanel />
           </div>
+
         </div>
       </div>
     </section>
+  )
+}
+
+/* ─── Forensic product proof panel ──────────────────────────────────────── */
+
+function ForensicProofPanel() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "360px",
+        background: "rgba(5,8,22,0.92)",
+        border: "1px solid rgba(37,99,255,0.28)",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        boxShadow: "0 0 32px rgba(37,99,255,0.10), 0 4px 24px rgba(0,0,0,0.6)",
+      }}
+    >
+      {/* Terminal header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+        <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2563FF", boxShadow: "0 0 6px rgba(37,99,255,0.8)" }} />
+        <span style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.12em" }}>SETTLED ENGINE · LIVE AUDIT</span>
+      </div>
+      {/* Audit lines */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+        {[
+          { label: "INGESTING", value: "MOHELA_STATEMENT_2024.pdf", dim: false },
+          { label: "CROSS-REF", value: "FCRA § 623 — Furnisher Accuracy", dim: false },
+          { label: "STATUS", value: "ANOMALY DETECTED IN PAYMENT HISTORY", blue: true },
+          { label: "GENERATING", value: "Dispute Packet — Priority: HIGH", dim: false },
+          { label: "MAIL", value: "Certified letter queued via USPS tracking", mail: true },
+        ].map(({ label, value, blue, mail, dim }) => (
+          <div key={label} style={{ display: "flex", gap: "8px", fontSize: "0.65rem", lineHeight: "1.5" }}>
+            <span style={{ color: "rgba(255,255,255,0.28)", minWidth: "80px", flexShrink: 0 }}>{label}</span>
+            <span style={{
+              color: blue ? "#2563FF" : mail ? "#4ade80" : dim ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.72)",
+              fontWeight: blue || mail ? 600 : 400,
+              textShadow: blue ? "0 0 10px rgba(37,99,255,0.6)" : mail ? "0 0 8px rgba(74,222,128,0.4)" : "none",
+            }}>{value}</span>
+          </div>
+        ))}
+      </div>
+      {/* Status bar */}
+      <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>BUILT FROM YOUR DOCUMENT · NOT A TEMPLATE</span>
+        <span style={{ fontSize: "0.6rem", color: "#2563FF", letterSpacing: "0.08em", fontWeight: 600 }}>READY</span>
+      </div>
+    </div>
+  )
+}
+
+/* ─── 3D Stacked-bars visual ─────────────────────────────────────────────── */
+
+function EqualBarsVisual() {
+  return (
+    <div
+      className="relative"
+      style={{
+        width: "320px",
+        height: "320px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* Ambient glow behind the bars */}
+      <div
+        style={{
+          position: "absolute",
+          inset: "-15%",
+          background:
+            "radial-gradient(ellipse at 55% 50%, rgba(37,99,255,0.22) 0%, rgba(37,99,255,0.06) 45%, transparent 70%)",
+          filter: "blur(4px)",
+        }}
+      />
+
+      {/* Bars group — perspective + tilt applied to container */}
+      <div
+        style={{
+          perspective: "900px",
+          perspectiveOrigin: "50% 50%",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "26px",
+            transform: "rotateX(26deg) rotateY(-18deg)",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          <Bar3D variant="white" />
+          <Bar3D variant="blue" />
+          <Bar3D variant="white" />
+        </div>
+      </div>
+
+      {/* Floor glow reflection from the blue bar */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "48px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "200px",
+          height: "28px",
+          background:
+            "radial-gradient(ellipse at center, rgba(37,99,255,0.55) 0%, transparent 70%)",
+          filter: "blur(12px)",
+        }}
+      />
+    </div>
+  )
+}
+
+const BAR_W = 248
+const BAR_H = 54
+const BAR_DEPTH = 26
+
+function Bar3D({ variant }: { variant: "white" | "blue" }) {
+  const isBlue = variant === "blue"
+
+  const frontBg = isBlue
+    ? "#2563FF"
+    : "linear-gradient(180deg, #EDF2FF 0%, #C8D8FF 100%)"
+
+  const topBg = isBlue
+    ? "linear-gradient(180deg, #5A8FFF 0%, #3D6FFF 100%)"
+    : "linear-gradient(180deg, #FFFFFF 0%, #DDE7FF 100%)"
+
+  const rightBg = isBlue
+    ? "linear-gradient(90deg, #1A44CC 0%, #0E2B90 100%)"
+    : "linear-gradient(90deg, #8FA8D8 0%, #6080B8 100%)"
+
+  const frontShadow = isBlue
+    ? "0 0 36px rgba(37,99,255,0.9), 0 0 70px rgba(37,99,255,0.55), inset 0 1px 0 rgba(180,210,255,0.35)"
+    : "0 0 14px rgba(180,210,255,0.18)"
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: `${BAR_W}px`,
+        height: `${BAR_H}px`,
+        transformStyle: "preserve-3d",
+      }}
+    >
+      {/* Front face */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: frontBg,
+          boxShadow: frontShadow,
+        }}
+      />
+
+      {/* Top face — rotates 90° back from the top edge */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: `${BAR_W}px`,
+          height: `${BAR_DEPTH}px`,
+          background: topBg,
+          transform: "rotateX(-90deg)",
+          transformOrigin: "top center",
+          backfaceVisibility: "hidden",
+        }}
+      />
+
+      {/* Right face — rotates 90° inward from the right edge */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: `${BAR_DEPTH}px`,
+          height: `${BAR_H}px`,
+          background: rightBg,
+          transform: "rotateY(90deg)",
+          transformOrigin: "right center",
+          backfaceVisibility: "hidden",
+        }}
+      />
+    </div>
   )
 }

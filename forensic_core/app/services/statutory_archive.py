@@ -33,8 +33,12 @@ def _expand_token(token: str) -> list[str]:
 
 
 def _load_next_rules() -> list[RuleEntry]:
-    repo_root = Path(__file__).resolve().parents[3]
-    rules_path = repo_root / "lib" / "violation-libraries.json"
+    local_rules_path = Path(__file__).resolve().parents[1] / "violation-libraries.json"
+    if local_rules_path.exists():
+        rules_path = local_rules_path
+    else:
+        repo_root = Path(__file__).resolve().parents[3]
+        rules_path = repo_root / "lib" / "violation-libraries.json"
     payload = json.loads(rules_path.read_text(encoding="utf-8"))
     rules: list[RuleEntry] = []
 

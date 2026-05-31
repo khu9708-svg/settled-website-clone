@@ -4,23 +4,27 @@ import { Stagger } from "@/components/settled/stagger"
 const steps = [
   {
     icon: FileUp,
-    title: "Upload or paste",
-    body: "Student loan servicer records, credit bureau files, tax lien notices, ChexSystems reports, LexisNexis entries, or EWS banking flags — whatever document proves the reporting error.",
+    title: "Upload your document",
+    body: "Paste or upload your student loan record, credit report, tax lien notice, ChexSystems file, or MOHELA / Navient statement. We read the actual document — not a summary.",
+    highlight: false,
   },
   {
     icon: SearchCheck,
-    title: "Forensic credit audit",
-    body: "The unified forensic engine scans for inaccurate, incomplete, unauthorized, duplicate, or misreported information across every domain in your upload.",
+    title: "We find the errors",
+    body: "Our forensic engine checks for wrong balances, duplicate entries, reporting violations, and FCRA statute breaches. Every finding is cited by law — not guessed.",
+    highlight: false,
   },
   {
     icon: FileText,
-    title: "FCRA dispute letter",
-    body: "Every letter is compiled from your document facts and cited statutes — not a generic template pulled from a chatbot.",
+    title: "You get the dispute letter",
+    body: "Every letter is built from your facts and your document. Not a template. Not a chatbot response. A document-specific dispute backed by federal statute.",
+    highlight: false,
   },
   {
     icon: MailCheck,
-    title: "Track the next step",
-    body: "Download the letter, send it, document certified-mail delivery, and know exactly when a bureau or furnisher response window opens.",
+    title: "We send it — certified mail included",
+    body: "No other dispute service does this. Settled sends your letter via certified USPS mail with tracking. You get proof of delivery and know exactly when the 30-day response window starts.",
+    highlight: true,
   },
 ]
 
@@ -34,24 +38,42 @@ export function WhatSettledDoes() {
               What SETTLED Is
             </p>
             <h2 className="mt-4 text-pretty text-3xl font-semibold leading-[1.05] text-white lg:text-[44px]">
-              A unified forensic engine for student loan audits, FCRA disputes, and bureau accountability.
+              The only student loan dispute service that reads your documents, finds the errors, and mails the letter for you.
             </h2>
             <p className="mt-5 text-base leading-relaxed text-white/60">
-              Built for people who watched MOHELA report the wrong balance, Navient duplicate a loan, or a tax lien
-              linger after release — and got told to &ldquo;just call the servicer.&rdquo; If your document shows a
-              real reporting failure, the engine organizes the dispute. If it does not, you get a clean status — no
-              weak letter, no upsell.
+              If MOHELA reported the wrong balance, Navient duplicated a loan, or a tax lien stayed on your report after it was released — you were probably told to &ldquo;call the servicer.&rdquo; That does not work. Settled builds a real dispute from your actual document. If we find something, we fight it. If we don&rsquo;t, you get a clean status — no weak letter, no upsell.
             </p>
+            {/* Certified mail differentiator callout */}
+            <div className="mt-5 rounded-xl border border-[#2563FF]/35 bg-[#2563FF]/[0.07] px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#7BA4FF]">
+                Only on Settled
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-white/75">
+                Built-in certified mail delivery. We send your dispute letter via USPS with tracking — so you have legal proof it arrived. No other credit dispute platform does this.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {steps.map((step) => (
-              <div key={step.title} className="rounded-xl border border-white/10 bg-black/35 p-4">
+              <div
+                key={step.title}
+                className={`rounded-xl border p-4 ${
+                  step.highlight
+                    ? "border-[#2563FF]/45 bg-[#2563FF]/[0.07] shadow-[0_0_24px_rgba(37,99,255,0.10)]"
+                    : "border-white/10 bg-black/35"
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-[#2563EB]/20 text-[#7BA4FF]">
+                  <div className={`flex size-9 items-center justify-center rounded-lg ${step.highlight ? "bg-[#2563FF]/30 text-[#7BA4FF]" : "bg-[#2563EB]/20 text-[#7BA4FF]"}`}>
                     <step.icon className="size-4" />
                   </div>
-                  <h3 className="font-bold text-white">{step.title}</h3>
+                  <h3 className={`font-bold ${step.highlight ? "text-white" : "text-white"}`}>{step.title}</h3>
+                  {step.highlight && (
+                    <span className="ml-auto rounded-full bg-[#2563FF]/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#7BA4FF]">
+                      Unique
+                    </span>
+                  )}
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-white/55">{step.body}</p>
               </div>

@@ -1,0 +1,129 @@
+{
+  "rules": [
+    {
+      "id": "fcra-611-investigation",
+      "domain": "consumer-credit",
+      "title": "Bureau investigation or notice requirement gap",
+      "statutes": [
+        "15 U.S.C. § 1681i"
+      ],
+      "patternsAny": [
+        "investigation",
+        "reinvestigation",
+        "no response",
+        "did not respond",
+        "failed to notify",
+        "no results"
+      ],
+      "patternsAll": [
+        "credit report|bureau|consumer report"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "fcra-623-furnisher-accuracy",
+      "domain": "consumer-credit",
+      "title": "Furnisher reported potentially inaccurate account data",
+      "statutes": [
+        "15 U.S.C. § 1681s-2"
+      ],
+      "patternsAny": [
+        "wrong balance",
+        "incorrect balance",
+        "wrong date",
+        "late payment error",
+        "duplicate tradeline",
+        "not mine",
+        "identity theft"
+      ],
+      "patternsAll": [
+        "account|tradeline|furnisher|creditor"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "fcra-607-reasonable-procedures",
+      "domain": "consumer-credit",
+      "title": "Possible bureau procedure failure",
+      "statutes": [
+        "15 U.S.C. § 1681e(b)"
+      ],
+      "patternsAny": [
+        "mixed file",
+        "wrong person",
+        "inaccurate reporting",
+        "mismatched account"
+      ],
+      "patternsAll": [
+        "credit report|consumer report|bureau"
+      ],
+      "severity": "medium"
+    },
+    {
+      "id": "student-loan-covid-forbearance-late",
+      "domain": "student-loan",
+      "title": "Late payment reported during protected forbearance period",
+      "statutes": [
+        "15 U.S.C. § 1681s-2",
+        "CARES Act reporting guidance"
+      ],
+      "patternsAny": [
+        "covid forbearance",
+        "forbearance",
+        "idr",
+        "save plan",
+        "pslf",
+        "deferment"
+      ],
+      "patternsAll": [
+        "late|delinquent|30 day|60 day|90 day"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "student-loan-duplicate-tradeline",
+      "domain": "student-loan",
+      "title": "Possible duplicate student-loan tradeline after transfer",
+      "statutes": [
+        "15 U.S.C. § 1681e(b)",
+        "15 U.S.C. § 1681i"
+      ],
+      "patternsAny": [
+        "duplicate tradeline",
+        "duplicate account",
+        "transferred",
+        "servicer transfer",
+        "mohela",
+        "navient",
+        "aidvantage",
+        "nelnet"
+      ],
+      "patternsAll": [
+        "loan|student"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "business-reporting-inaccuracy",
+      "domain": "business-credit",
+      "title": "Business bureau tradeline or public-record mismatch",
+      "statutes": [
+        "15 U.S.C. § 1681e(b)",
+        "15 U.S.C. § 1681i"
+      ],
+      "patternsAny": [
+        "dun",
+        "paydex",
+        "experian business",
+        "equifax business",
+        "vendor tradeline",
+        "ucc filing",
+        "business lien"
+      ],
+      "patternsAll": [
+        "business|company|vendor|tradeline|record"
+      ],
+      "severity": "high"
+    }
+  ]
+}

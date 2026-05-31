@@ -1,0 +1,22 @@
+{
+  "mode": "silent",
+  "fallback_reason": "",
+  "background_source": "local-previews",
+  "videos": [
+    {
+      "slug": "01-intro-who-we-are",
+      "mode": "silent",
+      "duration": 38.5
+    },
+    {
+      "slug": "02-for-the-people",
+      "mode": "silent",
+      "duration": 34.0
+    },
+    {
+      "slug": "03-how-it-works-30s",
+      "mode": "silent",
+      "duration": 31.0
+    }
+  ]
+}

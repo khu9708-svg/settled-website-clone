@@ -182,6 +182,9 @@ export default function BusinessPage() {
             Upload a business credit report or paste your bureau and vendor details. SETTLED checks for possible
             reporting problems and builds a dispute letter around the business record, not a consumer template.
           </p>
+          <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed text-[#AFC8FF]">
+            You are not stuck guessing — business reporting errors are common, and this gives you a clear path to document them.
+          </p>
         </div>
 
         <div className="mb-10 divide-y divide-white/10 border border-white/12 bg-[#030303]">
@@ -279,6 +282,9 @@ export default function BusinessPage() {
               <p className="text-sm font-medium leading-relaxed text-white/50">
                 Use this engine for business credit information you believe is inaccurate, incomplete, unverifiable, or
                 misreported. Review all generated materials before sending.
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-white/55">
+                Upload sensitive business documents only through secure intake. This is educational reporting support, not legal advice or a guaranteed result.
               </p>
             </form>
 

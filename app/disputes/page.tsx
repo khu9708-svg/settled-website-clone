@@ -147,6 +147,9 @@ export default function DisputesPage() {
             Upload a credit report, collection notice, or bureau response. SETTLED checks for possible FCRA reporting
             problems and generates a document-specific dispute letter you can review before sending.
           </p>
+          <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed text-[#AFC8FF]">
+            You are not overreacting — credit reporting errors are real, and there is a practical, step-by-step way to address them.
+          </p>
         </div>
 
         <div className="mb-10 divide-y divide-white/10 border border-white/12 bg-[#030303]">
@@ -239,6 +242,9 @@ export default function DisputesPage() {
               <p className="text-sm font-medium leading-relaxed text-white/50">
                 Use this engine only for information you believe is inaccurate or incomplete. SETTLED does not help
                 users dispute factual debts simply because they are inconvenient.
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-white/55">
+                For your safety, keep sensitive files in secure upload only. SETTLED provides educational reporting support, not legal advice or guaranteed outcomes.
               </p>
             </form>
 

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SETTLED — Launch Videos (Local)</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #2a2a2a;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #2563eb;
+      --accent-light: #7ba4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    h1 span {
+      color: var(--accent-light);
+    }
+
+    .instructions {
+      margin: 1rem 0 0;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .instructions strong {
+      color: var(--text);
+    }
+
+    .instructions ol {
+      margin: 0.75rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .instructions li {
+      margin-bottom: 0.35rem;
+    }
+
+    .instructions code {
+      font-size: 0.85em;
+      color: var(--accent-light);
+      background: #1a1a1a;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+    }
+
+    .player-block {
+      margin-bottom: 2rem;
+    }
+
+    video {
+      width: 100%;
+      max-height: 70vh;
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .now-playing {
+      margin: 0.75rem 0 0;
+      font-size: 0.95rem;
+      color: var(--accent-light);
+    }
+
+    .playlist {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .playlist button {
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 1rem;
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .playlist button:hover {
+      border-color: var(--accent);
+      background: #1a1f2e;
+    }
+
+    .playlist button.active {
+      border-color: var(--accent);
+      background: linear-gradient(90deg, rgba(37, 99, 235, 0.15), transparent);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    .playlist .num {
+      display: inline-block;
+      width: 1.5rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>SETTLED <span>Launch Videos</span></h1>
+      <div class="instructions">
+        <strong>How to open locally (Windows)</strong>
+        <ol>
+          <li>Keep this file in <code>content/launch-videos/</code> next to the <code>exports-v2/</code> folder.</li>
+          <li>Double-click <code>watch-local.html</code>, or run <code>open-player.bat</code> in this folder.</li>
+          <li>Or right-click the HTML file → <strong>Open with</strong> → your browser (Chrome, Edge, Firefox).</li>
+          <li>Click a title below to switch videos. Use the player controls for play, pause, volume, and fullscreen.</li>
+        </ol>
+      </div>
+    </header>
+
+    <section class="player-block">
+      <video id="player" controls playsinline preload="metadata"
+        src="./exports-v2/01-intro-who-we-are.mp4"></video>
+      <p class="now-playing" id="now-playing">Now playing: Intro — Who We Are</p>
+    </section>
+
+    <nav aria-label="Video playlist">
+      <ul class="playlist" id="playlist"></ul>
+    </nav>
+
+    <footer>
+      Narrated exports (v2) · Relative paths only — works offline, no server required.
+    </footer>
+  </div>
+
+  <script>
+    const videos = [
+      {
+        src: "./exports-v2/01-intro-who-we-are.mp4",
+        title: "Intro — Who We Are",
+      },
+      {
+        src: "./exports-v2/02-for-the-people.mp4",
+        title: "For the People",
+      },
+      {
+        src: "./exports-v2/03-how-it-works-30s.mp4",
+        title: "How It Works (30s)",
+      },
+    ];
+
+    const player = document.getElementById("player");
+    const nowPlaying = document.getElementById("now-playing");
+    const playlistEl = document.getElementById("playlist");
+    let activeIndex = 0;
+
+    function setActive(index) {
+      activeIndex = index;
+      const item = videos[index];
+      player.src = item.src;
+      player.load();
+      player.play().catch(() => {});
+      nowPlaying.textContent = "Now playing: " + item.title;
+      playlistEl.querySelectorAll("button").forEach((btn, i) => {
+        btn.classList.toggle("active", i === index);
+        btn.setAttribute("aria-current", i === index ? "true" : "false");
+      });
+    }
+
+    videos.forEach((item, index) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML =
+        '<span class="num">' +
+        (index + 1) +
+        ".</span> " +
+        item.title;
+      if (index === 0) {
+        btn.classList.add("active");
+        btn.setAttribute("aria-current", "true");
+      }
+      btn.addEventListener("click", () => setActive(index));
+      li.appendChild(btn);
+      playlistEl.appendChild(li);
+    });
+
+    player.addEventListener("ended", () => {
+      if (activeIndex < videos.length - 1) setActive(activeIndex + 1);
+    });
+  </script>
+</body>
+</html>
