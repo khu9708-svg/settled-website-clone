@@ -63,9 +63,6 @@ export function Header() {
               {item.label}
             </a>
           ))}
-          <a href="/support" className="text-[11px] font-medium text-white/68 transition-colors hover:text-white">
-            About
-          </a>
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
